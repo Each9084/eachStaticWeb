@@ -157,6 +157,46 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        /* 辉光管基础样式 */
+        .nixie-tube {
+            background: #1a1a1a;
+            color: #ff5e00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.5rem;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            text-shadow: 0 0 10px #ff5e00, 0 0 20px #ff8000;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 94, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nixie-sep {
+            font-size: 2.5rem;
+            color: #ff5e00;
+            text-shadow: 0 0 10px #ff5e00;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .dark-mode .nixie-tube {
+            background: #000;
+            border-color: #222;
+        }
     </style>
 </head>
 
@@ -181,6 +221,22 @@
                 <p class="text-gray-500 dark:text-gray-400 italic text-lg md:text-x2l leading-relaxed"
                     style="font-family: 'Cormorant Garamond', serif; letter-spacing: 0.05em;">我的冲锋是堂吉诃德式的冲锋，名为生活的大风车，<br
                         class="hidden md:block">让我与你大战三百回合，三百回合!</p>
+            </div>
+
+            <div class="mt-12 flex flex-col items-center animate-card" style="animation-delay: 1.2s;">
+                <div id="user-location" class="text-[10px] font-mono tracking-[0.3em] text-blue-500 mb-4 uppercase">
+                    Locating Cyber Station...
+                </div>
+                <div class="nixie-display flex space-x-2">
+                    <div class="nixie-tube" id="hour-tens">0</div>
+                    <div class="nixie-tube" id="hour-ones">0</div>
+                    <div class="nixie-sep">:</div>
+                    <div class="nixie-tube" id="min-tens">0</div>
+                    <div class="nixie-tube" id="min-ones">0</div>
+                    <div class="nixie-sep">:</div>
+                    <div class="nixie-tube" id="sec-tens">0</div>
+                    <div class="nixie-tube" id="sec-ones">0</div>
+                </div>
             </div>
         </div>
     </header>
@@ -243,6 +299,41 @@
         const ghGrid = document.getElementById('gh-grid');
         for (let i = 0; i < 210; i++) { const box = document.createElement('div'); box.style.width = '12px'; box.style.height = '12px'; box.style.borderRadius = '2px'; const level = Math.random(); box.style.backgroundColor = level > 0.8 ? '#216e39' : (level > 0.5 ? '#40c463' : '#ebedf0'); ghGrid.appendChild(box); }
         window.onresize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+
+        // 1. 获取并更新实时时间
+        function updateNixieTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+
+            document.getElementById('hour-tens').innerText = h[0];
+            document.getElementById('hour-ones').innerText = h[1];
+            document.getElementById('min-tens').innerText = m[0];
+            document.getElementById('min-ones').innerText = m[1];
+            document.getElementById('sec-tens').innerText = s[0];
+            document.getElementById('sec-ones').innerText = s[1];
+        }
+        setInterval(updateNixieTime, 1000);
+        updateNixieTime();
+
+        // 2. 获取用户所在区域 (通过 IP 定位或浏览器 API)
+        async function fetchUserLocation() {
+            const locElement = document.getElementById('user-location');
+            try {
+                // 使用公开免费 API 获取地理位置信息
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                if (data.city && data.country_name) {
+                    locElement.innerText = `Cyber Station: ${data.city}, ${data.country_code} // Node Active`;
+                } else {
+                    locElement.innerText = "Cyber Station: Unknown Sector";
+                }
+            } catch (error) {
+                locElement.innerText = "Cyber Station: Offline Mode";
+            }
+        }
+        fetchUserLocation();
     </script>
 </body>
 
