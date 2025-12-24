@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Each Static Web | Esse quam videri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-blue: #0071e3;
+            --gh-green: #39d353;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --calligraphy-font: "Kaiti", "STKaiti", "华文楷体", serif;
+            /* 烫金渐变定义 */
+            --gold-gradient: linear-gradient(180deg, #bf953f 0%, #fcf6ba 20%, #b38728 50%, #fbf5b7 80%, #aa771c 100%);
+        }
+
+        .dark-mode {
+            --bg-color: #050505;
+            --text-color: #f5f5f7;
+            --card-bg: rgba(20, 20, 22, 0.85);
+        }
+
+        body {
+            font-family: -apple-system, "SF Pro SC", "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        /* 1. 强化瀑布流：增加对比度与密度 */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.45;
+            /* 显著提升可见度 */
+        }
+
+        .gothic-title {
+            font-family: 'UnifrakturMaguntia', serif;
+            font-size: 1.8rem;
+        }
+
+        .calligraphy {
+            font-family: var(--calligraphy-font);
+        }
+
+        /* 2. 繁体長安烫金样式 */
+        .gold-text {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.1));
+        }
+
+        .seal {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #d42e22;
+            color: white;
+            font-size: 12px;
+            padding: 2px;
+            border-radius: 2px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        /* 5. 载入动画 */
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+                filter: blur(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        .animate-card {
+            animation: cardReveal 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        .typing-container {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            border-right: 2px solid var(--accent-blue);
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            animation: typing 3.5s steps(40, end) forwards, blink 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from {
+                width: 0
+            }
+
+            to {
+                width: 100%
+            }
+        }
+
+        @keyframes blink {
+
+            from,
+            to {
+                border-color: transparent
+            }
+
+            50% {
+                border-color: var(--accent-blue)
+            }
+        }
+
+        .bento-card {
+            background: var(--card-bg);
+            border-radius: 2.5rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.5s cubic-bezier(0.15, 0.83, 0.66, 1);
+        }
+
+        /* 4. ULSTER 底部定位 */
+        .ulster-bg {
+            position: absolute;
+            bottom: 1rem;
+            right: 2rem;
+            line-height: 1;
+            font-family: 'Arial Black', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="matrix-canvas"></canvas>
+
+    <nav class="fixed top-0 w-full z-50 border-b border-black/5 dark:border-white/5 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+            <a href="#" class="gothic-title">
+                <span class="text-[#0071e3]">Each</span> <span class="dark:text-white">Web</span>
+            </a>
+            <div class="flex items-center space-x-10 text-[13px] font-bold">
+                <a href="pages/About.html" class="hover:text-blue-600 transition">关于</a>
+                <a href="pages/Blog.html" class="hover:text-blue-600 transition">博客</a>
+                <a href="https://github.com/Each9084" target="_blank"
+                    class="flex items-center hover:text-[#39d353] transition">
+                    <i class="fab fa-github text-xl mr-2"></i> Github
+                </a>
+                <button id="themeToggle" class="text-lg">
+                    <i id="modeIcon" class="fas fa-sun text-orange-400"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="relative pt-32 pb-24 px-6">
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="mb-8">
+                <h1 class="calligraphy text-7xl md:text-8xl font-bold tracking-tight mb-4">春风得意马蹄疾</h1>
+                <h1 class="calligraphy text-5xl md:text-7xl font-bold opacity-80">
+                    一日看尽<span class="gold-text">長安</span>花 <span class="seal">Each<br>印</span>
+                </h1>
+            </div>
+            <div class="h-8 mb-12 inline-block">
+                <p class="typing-container text-[#0071e3] dark:text-blue-400 font-mono text-lg md:text-xl font-medium">
+                    Welcome to the world of a national-level Rookie programmer.
+                </p>
+            </div>
+            <div class="flex justify-center items-center space-x-16 opacity-30 dark:opacity-40">
+                <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="M9 12h3c1 0 2-1 2-2V8m0 4v2c0 1 1 2 2 2h3" stroke-linecap="round" />
+                </svg>
+                <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="5" y="5" width="14" height="14" rx="2" />
+                    <path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 pb-32">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+
+            <div class="md:col-span-8 bento-card p-10 animate-card">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="w-12 h-12 bg-[#2ea44f] rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                            <i class="fab fa-github text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Open Source Contribution</h3>
+                            <p class="text-xs text-gray-400 font-mono">github.com/Each9084</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5 mb-8" id="gh-grid"></div>
+                <div class="grid grid-cols-3 gap-4 border-t border-black/5 dark:border-white/5 pt-8">
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Repos</p>
+                        <p class="text-2xl font-black text-[#2ea44f]" id="repo-count">--</p>
+                    </div>
+                    <div class="text-center border-x border-black/5 dark:border-white/5">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Followers</p>
+                        <p class="text-2xl font-black text-[#2ea44f]" id="follower-count">--</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Stars Earned</p>
+                        <p class="text-2xl font-black text-[#2ea44f]" id="star-count">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-4 bento-card p-10 bg-[#1d1d1f] border-none text-white relative overflow-hidden animate-card"
+                style="animation-delay: 0.2s;">
+                <div class="relative z-10">
+                    <span class="text-xs font-mono text-gray-500 tracking-widest">信条</span>
+                    <h3 class="text-3xl lg:text-4xl font-bold mt-6 calligraphy whitespace-nowrap">Esse quam videri</h3>
+                    <p class="mt-4 text-sm text-gray-400 italic">“存真去伪，实事求是”</p>
+                    <div class="mt-16 flex items-center">
+                        <span class="flex h-3 w-3 mr-3">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39d353] opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-[#39d353]"></span>
+                        </span>
+                        <span class="text-sm font-bold font-mono text-[#39d353]">每日开发中...</span>
+                    </div>
+                </div>
+                <div
+                    class="ulster-bg text-white/[0.05] text-7xl font-black select-none pointer-events-none tracking-tighter">
+                    ULSTER
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section class="max-w-6xl mx-auto px-6 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+
+            <div class="md:col-span-8 bento-card p-10 group cursor-pointer relative overflow-hidden animate-card"
+                style="animation-delay: 0.4s;">
+                <div class="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div
+                                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-wallet text-xl"></i>
+                            </div>
+                            <span
+                                class="px-3 py-1 bg-blue-600/10 text-[#0071e3] text-[10px] font-black rounded-full tracking-widest">FEATURED
+                                PROJECT</span>
+                        </div>
+
+                        <h3 class="text-3xl font-black mb-4 group-hover:text-[#0071e3] transition-colors">Quick
+                            Accounting Tracker</h3>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-xl leading-relaxed">
+                            一款典雅简约的 Flutter 记账助手。采用 <span class="text-blue-500 font-mono">SQLite</span>
+                            离线持久化方案，支持多语言国际化与动态波浪视觉风格。
+                        </p>
+
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            <span
+                                class="text-[10px] font-bold border border-black/10 dark:border-white/10 px-2 py-1 rounded">Flutter
+                                3.x</span>
+                            <span
+                                class="text-[10px] font-bold border border-black/10 dark:border-white/10 px-2 py-1 rounded">Provider</span>
+                            <span
+                                class="text-[10px] font-bold border border-black/10 dark:border-white/10 px-2 py-1 rounded">sqflite</span>
+                            <span
+                                class="text-[10px] font-bold border border-black/10 dark:border-white/10 px-2 py-1 rounded">i18n</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 flex items-center space-x-6">
+                        <a href="https://github.com/Each9084/Quick_Accounting_Tracker" target="_blank"
+                            class="flex items-center text-sm font-bold text-blue-600 hover:underline">
+                            View Source <span class="ml-2">→</span>
+                        </a>
+                        <span class="text-[10px] text-gray-400 font-mono">Current Version: v0.2.4</span>
+                    </div>
+                </div>
+
+                <div
+                    class="absolute right-[-40px] top-20 opacity-[0.03] dark:opacity-[0.05] font-mono text-[10px] pointer-events-none select-none rotate-3">
+                    <pre>
+lib/
+├── data/
+│   ├── dao/
+│   ├── db/
+│   └── dataModel/
+├── models/
+├── screens/
+├── widgets/
+└── main.dart
+                    </pre>
+                </div>
+            </div>
+
+            <div class="md:col-span-4 bento-card p-10 flex flex-col justify-between animate-card"
+                style="animation-delay: 0.5s;">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">Skill Stack / 技能</h3>
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm font-bold">Mobile / Flutter</span>
+                            <span class="text-[10px] font-mono text-blue-600">PRO</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm font-bold">Backend / Python</span>
+                            <span class="text-[10px] font-mono text-gray-400">ADVANCED</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm font-bold">Database / SQLite</span>
+                            <span class="text-[10px] font-mono text-gray-400">STABLE</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm font-bold">Web / Tailwind</span>
+                            <span class="text-[10px] font-mono text-blue-500">EXPERT</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-8 border-t border-black/5 dark:border-white/5">
+                    <p class="text-[10px] text-gray-400 font-mono leading-tight">
+                        &gt; BUILD_ENV: SUCCESS<br>
+                        &gt; ARCH: CLEAN_ARCHITECTURE
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="py-20 border-t border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.01]">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-12">
+                <div class="space-y-4">
+                    <p class="gothic-title text-2xl">
+                        <span class="text-[#0071e3]">Each</span> Web
+                    </p>
+                    <p class="text-sm text-gray-500 max-w-xs leading-relaxed">
+                        探索技术的边界，记录代码的温度。基于 Apple 美学与极客精神构建的个人空间。
+                    </p>
+                    <div class="flex items-center space-x-2 text-[10px] font-mono text-green-500">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span>SYSTEM STATUS: OPERATIONAL</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-20">
+                    <div>
+                        <h4 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-6">Navigation</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="#" class="hover:text-blue-600 transition">About Me</a></li>
+                            <li><a href="#" class="hover:text-blue-600 transition">Projects</a></li>
+                            <li><a href="#" class="hover:text-blue-600 transition">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-6">Contact</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="mailto:each9084@gmail.com" class="hover:text-blue-600 transition">Email</a>
+                            </li>
+                            <li><a href="https://github.com/Each9084" class="hover:text-blue-600 transition">GitHub</a>
+                            </li>
+                            <li><a href="#" class="hover:text-blue-600 transition">Bilibili</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+                    class="group w-14 h-14 rounded-2xl border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-800 transition shadow-sm active:scale-90">
+                    <i class="fas fa-chevron-up group-hover:-translate-y-1 transition-transform"></i>
+                </button>
+            </div>
+
+            <div
+                class="mt-20 pt-8 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-[10px] text-gray-400 tracking-[0.2em] uppercase">
+                    © 2025 Each9084 · Designed for Future.
+                </p>
+                <div class="flex items-center space-x-6 text-[10px] font-mono text-gray-400">
+                    <span>ENV: VERCEL_PROD</span>
+                    <span>VER: 2.0.1_STABLE</span>
+                    <span class="text-blue-500">BUILD WITH PASSION</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 在原有的 script 标签末尾添加
+        // 自动更新浏览器 Agent 信息
+        document.getElementById('browser-info').innerText = `AGENT: ${navigator.platform}`;
+
+        // 自动设置最后更新日期（示例）
+        const now = new Date();
+        document.getElementById('last-update').innerText = `LAST_SYNC: ${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+    </script>
+
+    <script>
+        // 1. 强化瀑布流逻辑
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        const fontSize = 18; // 稍微变大
+        const columns = Math.floor(width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            // 降低清除层的透明度，让拖尾更长
+            ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(5, 5, 5, 0.2)' : 'rgba(245, 245, 247, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.font = 'bold ' + fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = Math.floor(Math.random() * 2);
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // 颜色增强
+                ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#444' : '#999';
+                if (Math.random() > 0.95) ctx.fillStyle = '#0071e3';
+
+                ctx.fillText(text, x, y);
+
+                if (y > height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // 6. 获取真实 GitHub 数据（含总 Star 数计算）
+        async function fetchGitHubData(username) {
+            try {
+                // 基本信息请求
+                const userRes = await fetch(`https://api.github.com/users/${username}`);
+                const userData = await userRes.json();
+
+                // 仓库列表请求用以计算总 Star
+                const repoRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+                const repos = await repoRes.json();
+                const totalStars = repos.reduce((prev, curr) => prev + curr.stargazers_count, 0);
+
+                document.getElementById('repo-count').innerText = userData.public_repos;
+                document.getElementById('follower-count').innerText = userData.followers;
+                document.getElementById('star-count').innerText = totalStars;
+            } catch (error) {
+                console.error("API Fetch Error", error);
+            }
+        }
+        fetchGitHubData('Each9084');
+
+        // 主题切换
+        const themeToggle = document.getElementById('themeToggle');
+        const modeIcon = document.getElementById('modeIcon');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            modeIcon.className = isDark ? 'fas fa-moon text-blue-200' : 'fas fa-sun text-orange-400';
+        });
+
+        // 贡献墙
+        const ghGrid = document.getElementById('gh-grid');
+        for (let i = 0; i < 210; i++) {
+            const box = document.createElement('div');
+            box.style.width = '12px'; box.style.height = '12px'; box.style.borderRadius = '2px';
+            const level = Math.random();
+            box.style.backgroundColor = level > 0.8 ? '#216e39' : (level > 0.5 ? '#40c463' : '#ebedf0');
+            ghGrid.appendChild(box);
+        }
+
+        window.onresize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+    </script>
+</body>
+
+</html>
