@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客 | Each Static Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // 防止深色模式闪烁
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-blue: #0071e3;
+        }
+
+        .dark-mode {
+            --bg-color: #000000;
+            --text-color: #f5f5f7;
+        }
+
+        body {
+            font-family: -apple-system, "SF Pro SC", "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.5s ease;
+            overflow: hidden;
+            /* 施工页防止滚动 */
+        }
+
+        /* 施工中流光动画 */
+        .working-gradient {
+            background: linear-gradient(90deg, #86868b, #1d1d1f, #86868b);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        .dark-mode .working-gradient {
+            background: linear-gradient(90deg, #424245, #f5f5f7, #424245);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* 赛博网格背景 */
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, var(--text-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.03;
+            z-index: -1;
+        }
+
+        /* 装饰性光晕 */
+        .glow-orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--accent-blue);
+            filter: blur(120px);
+            opacity: 0.05;
+            border-radius: 50%;
+            z-index: -1;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(5%, 10%);
+            }
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(0, 113, 227, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+    <div class="grid-bg"></div>
+    <div class="glow-orb top-1/4 left-1/4"></div>
+
+    <script src="../components/navBar.js"></script>
+
+    <main class="flex-1 flex flex-col items-center justify-center px-8 text-center">
+        <div class="space-y-8 max-w-2xl">
+            <div class="status-badge mb-4">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+                UNDER CONSTRUCTION
+            </div>
+
+            <h1 class="text-6xl md:text-7xl font-black tracking-tight working-gradient">
+                思考正在同步中...
+            </h1>
+
+            <p class="text-xl text-gray-500 font-medium leading-relaxed">
+                这里是我未来的文字城堡。我正计划通过 <span class="text-blue-600">GitHub API</span> 实时抓取并解析 Markdown 文稿，实现无感化的极客写作体验。
+            </p>
+
+            <div class="pt-12 grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60">
+                <div
+                    class="p-6 border border-black/5 dark:border-white/5 rounded-3xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur">
+                    <i class="fab fa-markdown text-2xl mb-4"></i>
+                    <h4 class="text-sm font-bold">Markdown 驱动</h4>
+                </div>
+                <div
+                    class="p-6 border border-black/5 dark:border-white/5 rounded-3xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur">
+                    <i class="fab fa-github-alt text-2xl mb-4"></i>
+                    <h4 class="text-sm font-bold">GitHub Sync</h4>
+                </div>
+                <div
+                    class="p-6 border border-black/5 dark:border-white/5 rounded-3xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur">
+                    <i class="fas fa-bolt text-2xl mb-4"></i>
+                    <h4 class="text-sm font-bold">Vercel 部署</h4>
+                </div>
+            </div>
+
+            <div class="pt-12">
+                <a href="../index.html" class="text-sm font-bold text-blue-600 hover:underline">
+                    ← 返回主页探索其他区域
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-12 text-center opacity-40">
+        <p class="text-[10px] tracking-widest uppercase font-bold">Digital Mind · Comming Soon</p>
+    </footer>
+
+    <script>
+        // 主题切换逻辑由 navBar.js 统一处理，此处无需额外代码
+    </script>
+</body>
+
+</html>

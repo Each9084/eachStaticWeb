@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我 | Each Static Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-blue: #0071e3;
+        }
+
+        .dark-mode {
+            --bg-color: #000000;
+            --text-color: #f5f5f7;
+        }
+
+        body {
+            font-family: -apple-system, "SF Pro SC", "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.5s ease;
+        }
+
+        .gothic-logo {
+            font-family: 'UnifrakturMaguntia', serif;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .edu-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2.5rem;
+            padding: 3rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dark-mode .edu-card {
+            background: rgba(28, 28, 30, 0.8);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .edu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+        }
+
+        .logo-bg {
+            position: absolute;
+            right: -5%;
+            bottom: -5%;
+            width: 200px;
+            height: 200px;
+            opacity: 0.12;
+            filter: grayscale(0.2);
+            transform: rotate(-5deg);
+            pointer-events: none;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .tech-icon-card {
+            background: white;
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark-mode .tech-icon-card {
+            background: #1c1c1e;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tech-icon-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 113, 227, 0.15);
+            border-color: var(--accent-blue);
+        }
+
+        .tech-icon-card img {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 12px;
+            object-fit: contain;
+        }
+
+        .progress-bar-bg {
+            height: 7px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .dark-mode .progress-bar-bg {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            width: 0;
+            transition: width 1.5s ease-out;
+        }
+
+        /* 关键：默认 opacity 设为 1 或通过脚本激活 */
+        section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .flag {
+            width: 18px;
+            height: 12px;
+            display: inline-block;
+            margin-right: 6px;
+            vertical-align: middle;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <script src="../components/navBar.js"></script>
+
+    <main class="max-w-6xl mx-auto px-8 pt-32 pb-32">
+        <h1 class="text-6xl font-black tracking-tighter mb-24 text-center">About Me</h1>
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-40">
+            <div class="edu-card"><img src="../assets/bristolLogo.png" class="logo-bg"
+                    style="filter: drop-shadow(0 0 5px #B01C2E);" alt="Bristol">
+                <div class="relative z-10">
+                    <div class="text-xs font-mono font-bold tracking-widest">硕士 | <span
+                            style="color: #B01C2E;">DISTINCTION</span></div>
+                    <h3 class="text-2xl font-black mt-4 mb-1">布里斯托大学</h3>
+                    <p class="text-gray-500 font-medium">数据科学 | 工程与数学学院</p>
+                    <div class="mt-12 text-[11px] text-gray-400 font-bold flex items-center uppercase tracking-tighter">
+                        University of Bristol <span class="mx-3 opacity-30">|</span> <img
+                            src="https://flagcdn.com/w40/gb-eng.png" class="flag" alt="England">布里斯托</div>
+                </div>
+            </div>
+            <div class="edu-card"><img src="../assets/ulsterLogo.png" class="logo-bg"
+                    style="filter: drop-shadow(0 0 5px #BAA360);" alt="Ulster">
+                <div class="relative z-10">
+                    <div class="text-xs font-mono font-bold tracking-widest"><span class="text-blue-600">学士</span> |
+                        <span style="color: #BAA360;">1st Honours 一等荣誉学士</span></div>
+                    <h3 class="text-2xl font-black mt-4 mb-1">阿尔斯特大学</h3>
+                    <p class="text-gray-500 font-medium">计算机科学 | 计算机、工程和建筑环境学院</p>
+                    <div class="mt-12 text-[11px] text-gray-400 font-bold flex items-center uppercase tracking-tighter">
+                        Ulster University <span class="mx-3 opacity-30">|</span> <img
+                            src="https://flagcdn.com/w40/gb-nir.png" class="flag" alt="Northern Ireland">贝尔法斯特</div>
+                </div>
+            </div>
+        </section>
+        <section class="mb-40 max-w-4xl mx-auto">
+            <h2 class="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-12 text-center">Proficiency / 熟练度
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12" id="progressSection"></div>
+        </section>
+        <section class="mb-40">
+            <h2 class="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-16 text-center">Tech Stack / 技术栈
+            </h2>
+            <div class="tech-grid" id="techGrid"></div>
+        </section>
+    </main>
+
+    <script>
+        const skills = [{ name: "Dart / Flutter / AI调用", level: 95 }, { name: "SQL / Java / PS / PR", level: 85 }, { name: "Python / Linux / Excel", level: 75 }, { name: "Hadoop / Spark / Kafka", level: 65 }, { name: "React / Angular / Tableau", level: 55 }, { name: "Unreal / C++ / Vue / Flask", level: 45 }];
+        const progContainer = document.getElementById('progressSection');
+        skills.forEach(s => { const opacity = s.level / 100; progContainer.innerHTML += `<div class="group"><div class="flex justify-between text-sm font-bold mb-1"><span>${s.name}</span><span class="text-blue-600">${s.level}%</span></div><div class="progress-bar-bg"><div class="progress-fill shadow-[0_0_8px_rgba(0,113,227,0.3)]" data-width="${s.level}%" style="background: rgba(0, 113, 227, ${opacity});"></div></div></div>`; });
+        const techs = [{ name: 'Flutter', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg', url: 'https://docs.flutter.dev' }, { name: 'Android', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/android/android-original.svg', url: 'https://developer.android.com' }, { name: 'Python', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg', url: 'https://docs.python.org' }, { name: 'Java', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg', url: 'https://java.com' }, { name: 'React', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg', url: 'https://react.dev' }, { name: 'Vue.js', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg', url: 'https://vuejs.org' }, { name: 'MySQL', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg', url: 'https://mysql.com' }, { name: 'Linux', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg', url: 'https://kernel.org' }, { name: 'Hadoop', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/hadoop/hadoop-original.svg', url: 'https://hadoop.apache.org' }, { name: 'Docker', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg', url: 'https://docker.com' }, { name: 'GitHub', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg', url: 'https://github.com' }, { name: 'Git', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg', url: 'https://git-scm.com' }, { name: 'AWS', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg', url: 'https://aws.amazon.com' }, { name: 'Dart', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dart/dart-original.svg', url: 'https://dart.dev' }, { name: 'Azure', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg', url: 'https://azure.com' }, { name: 'Unreal', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/unrealengine/unrealengine-original.svg', url: 'https://unrealengine.com' }, { name: 'C++', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg', url: 'https://isocpp.org' }, { name: 'Spark', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apache/apache-original.svg', url: 'https://spark.apache.org' }, { name: 'Photoshop', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg', url: 'https://adobe.com' }, { name: 'ChatGPT', img: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/openai.svg', url: 'https://openai.com' }];
+        const grid = document.getElementById('techGrid');
+        techs.forEach(t => { const card = document.createElement('div'); card.className = 'tech-icon-card'; card.onclick = () => window.open(t.url, '_blank'); card.innerHTML = `<img src="${t.img}" alt="${t.name}"><div class="text-[10px] font-black uppercase tracking-wider text-zinc-500">${t.name}</div>`; grid.appendChild(card); });
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); const bars = entry.target.querySelectorAll('.progress-fill'); bars.forEach(b => b.style.width = b.dataset.width); } }); }, { threshold: 0.1 });
+        document.querySelectorAll('section').forEach(s => observer.observe(s));
+    </script>
+</body>
+
+</html>
