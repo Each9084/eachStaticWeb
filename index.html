@@ -287,6 +287,60 @@
         </div>
     </main>
 
+    <footer class="py-20 border-t border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.01]">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-12">
+                <div class="space-y-4">
+                    <p class="gothic-title text-2xl"><span class="text-[#0071e3]">Each</span> Web</p>
+                    <p class="text-sm text-gray-500 max-w-xs leading-relaxed">这是属于我的一篇赛博空间, 我在这私属的城堡里奏响凯歌</p>
+                    <div class="flex items-center space-x-2 text-[10px] font-mono text-green-500">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span>SYSTEM STATUS: OPERATIONAL</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-20">
+                    <div>
+                        <h4 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-6">Navigation</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="pages/About.html" class="hover:text-blue-600 transition">About Me</a></li>
+                            <li><a href="https://github.com/Each9084" target="_blank"
+                                    class="hover:text-blue-600 transition">Github</a></li>
+                            <li><a href="pages/Blog.html" class="hover:text-blue-600 transition">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-6">Contact</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="mailto:each9084@gmail.com"
+                                    class="hover:text-blue-600 transition">each9084@gmail.com</a></li>
+                            <li><a href="https://space.bilibili.com/34878493" target="_blank"
+                                    class="hover:text-blue-600 transition">是蛋黄蛋的B站</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+                    class="group w-14 h-14 rounded-2xl border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-800 transition shadow-sm">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+
+            <div
+                class="mt-20 pt-8 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-gray-400">
+                <p class="tracking-[0.2em] uppercase">© 2025 Each9084 · Designed for Future.</p>
+                <div class="flex items-center space-x-6 font-mono uppercase">
+                    <span>Env: Vercel_Prod</span>
+                    <span id="last-update">LAST_SYNC: 2025-12-25</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
