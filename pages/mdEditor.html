@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 在线编辑器 | Each Static Web</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&display=swap');
+
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-blue: #0071e3;
+            --code-bg: #ececed;
+        }
+
+        .dark-mode {
+            --bg-color: #000000;
+            --text-color: #f5f5f7;
+            --code-bg: #1c1c1e;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.5s ease;
+        }
+
+        .gothic-logo {
+            font-family: 'UnifrakturMaguntia', serif !important;
+        }
+
+        .editor-title {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        #vditor {
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode #vditor {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .compact-header {
+            padding-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-green {
+            color: #10b981;
+        }
+
+        .ready-blue {
+            color: #0071e3;
+            font-weight: bold;
+        }
+
+        .pulse-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+            animation: slowPulse 3s infinite ease-in-out;
+        }
+
+        @keyframes slowPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+        }
+
+        /* 代码块美化 */
+        .vditor-reset pre>code {
+            background-color: var(--code-bg) !important;
+            color: var(--text-color) !important;
+            padding: 1.2rem !important;
+            border-radius: 0.8rem !important;
+            border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* 1. 恢复识别遮罩 UI */
+        #drop-zone {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 113, 227, 0.05);
+            backdrop-filter: blur(15px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vector-draw {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2.5s ease forwards;
+        }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .focus-mode #vditor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 1000;
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+    <script src="../components/navbar.js"></script>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full px-8 pt-24 pb-12 editor-container">
+        <header class="compact-header flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl editor-title text-zinc-900 dark:text-zinc-100">Markdown 在线编辑器</h1>
+
+            <div class="flex items-center gap-2">
+                <button onclick="toggleFocusMode()"
+                    class="px-3 py-1.5 bg-indigo-500/10 text-indigo-500 rounded-lg text-[11px] font-bold hover:bg-indigo-500 hover:text-white transition flex items-center gap-2">
+                    <i class="fas fa-expand"></i> 专注模式
+                </button>
+                <button onclick="clearEditor()"
+                    class="px-3 py-1.5 bg-rose-500/10 text-rose-500 rounded-lg text-[11px] font-bold hover:bg-rose-500 hover:text-white transition flex items-center gap-2">
+                    <i class="fas fa-trash-alt"></i> 清空
+                </button>
+                <button onclick="document.getElementById('fileInput').click()"
+                    class="px-3 py-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-lg text-[11px] font-bold hover:bg-zinc-300 transition flex items-center gap-2">
+                    <i class="fas fa-file-import"></i> 导入
+                </button>
+                <input type="file" id="fileInput" class="hidden" accept=".md" onchange="importFile(this)">
+
+                <div class="relative group">
+                    <button
+                        class="px-3 py-1.5 bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black rounded-lg text-[11px] font-bold transition flex items-center gap-2">
+                        <i class="fas fa-file-export"></i> 导出 <i class="fas fa-chevron-down text-[8px]"></i>
+                    </button>
+                    <div
+                        class="absolute right-0 mt-2 w-28 bg-white dark:bg-zinc-900 border border-black/5 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-[10px]">
+                        <button onclick="exportProcess('pdf')"
+                            class="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">PDF</button>
+                        <button onclick="exportProcess('html')"
+                            class="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">HTML</button>
+                        <button onclick="exportProcess('jpg')"
+                            class="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">JPG</button>
+                    </div>
+                </div>
+                <button onclick="exportFile()"
+                    class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-bold hover:bg-blue-700 transition flex items-center gap-2">
+                    <i class="fas fa-download"></i> 下载
+                </button>
+            </div>
+        </header>
+
+        <div id="vditor" class="min-h-[72vh]"></div>
+
+        <footer class="mt-4 flex justify-between items-center text-[10px] font-mono uppercase tracking-wider">
+            <span class="status-green font-bold tracking-widest">Status: Auto-saving to LocalStorage</span>
+            <div class="flex items-center">
+                <span class="pulse-dot"></span>
+                <span class="ready-blue">Ready</span>
+            </div>
+        </footer>
+    </main>
+
+    <div id="drop-zone">
+        <div id="drop-modal"
+            class="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] shadow-2xl text-center max-w-sm mx-4 border border-black/5 animate-reveal">
+            <div class="mb-6 flex justify-center">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#0071e3" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" class="vector-draw">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">识别成功</h3>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">检测到文稿资产。继续操作将覆盖内容，是否确定？</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="confirmImport()"
+                    class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition">确定覆盖</button>
+                <button onclick="closeDropZone()"
+                    class="px-6 py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold hover:bg-zinc-200 transition">放弃</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let vditor;
+        let pendingFileContent = "";
+
+        window.addEventListener('load', () => {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+
+            vditor = new Vditor('vditor', {
+                height: window.innerHeight * 0.72,
+                theme: isDark ? 'dark' : 'classic',
+                hint: {
+                    emoji: { "smile": "😄", "laugh": "😆", "wink": "😉", "heart": "❤️", "star": "⭐", "fire": "🔥", "rocket": "🚀", "sql": "🗄️", "java": "☕", "python": "🐍", "flutter": "💙" }
+                },
+                cache: { enable: true, id: 'vditor-each-web' },
+                preview: { theme: { current: isDark ? 'dark' : 'light' }, math: { engine: 'KaTeX' } },
+                toolbar: [
+                    'emoji', 'headings', 'bold', 'italic', 'strike', '|',
+                    'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+                    'code', 'inline-code', 'insert-after', 'insert-before', '|',
+                    'link', 'table', '|',
+                    'undo', 'redo', '|',
+                    'edit-mode', 'content-theme', 'outline', 'preview'
+                ]
+            });
+
+            // 1. 重新监听拖拽
+            window.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                document.getElementById('drop-zone').style.display = 'flex';
+            });
+        });
+
+        function toggleFocusMode() { document.body.classList.add('focus-mode'); }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.body.classList.remove('focus-mode'); });
+
+        // 2. 修复 JPG 导出（支持长图/全量内容）
+        async function exportProcess(type) {
+            if (type === 'jpg') {
+                // 获取编辑器当前的渲染内容容器
+                const content = document.querySelector('.vditor-ir') || document.querySelector('.vditor-sv') || document.querySelector('.vditor-content');
+                if (!content) return;
+
+                // 创建一个克隆节点进行离屏渲染，防止因容器滚动导致的截断
+                const clone = content.cloneNode(true);
+                clone.style.height = 'auto';
+                clone.style.width = content.offsetWidth + 'px';
+                clone.style.position = 'absolute';
+                clone.style.top = '-9999px';
+                document.body.appendChild(clone);
+
+                const canvas = await html2canvas(clone, {
+                    backgroundColor: document.documentElement.classList.contains('dark-mode') ? '#1c1c1e' : '#ffffff',
+                    useCORS: true,
+                    scale: 2 // 提高清晰度
+                });
+
+                const link = document.createElement('a');
+                link.download = `Note_${Date.now()}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                document.body.removeChild(clone);
+            } else if (type === 'pdf') {
+                window.print();
+            } else {
+                const blob = new Blob([vditor.getHTML()], { type: 'text/html' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob); link.download = 'export.html'; link.click();
+            }
+        }
+
+        // 1. 拖拽文件识别
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.md')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    pendingFileContent = ev.target.result;
+                    // 如果有内容，弹窗确认
+                    if (vditor.getValue().trim().length > 0) {
+                        document.getElementById('drop-zone').style.display = 'flex';
+                    } else {
+                        vditor.setValue(pendingFileContent);
+                        closeDropZone();
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                closeDropZone();
+            }
+        });
+
+        function confirmImport() { vditor.setValue(pendingFileContent); closeDropZone(); }
+        function closeDropZone() { document.getElementById('drop-zone').style.display = 'none'; }
+        function clearEditor() { if (confirm("确定要清空吗？")) { vditor.setValue(""); localStorage.removeItem('vditor-each-web'); } }
+
+        function importFile(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    pendingFileContent = e.target.result;
+                    if (vditor.getValue().trim().length > 0) document.getElementById('drop-zone').style.display = 'flex';
+                    else vditor.setValue(pendingFileContent);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function exportFile() {
+            const blob = new Blob([vditor.getValue()], { type: 'text/markdown' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob); link.download = `Note_${Date.now()}.md`; link.click();
+        }
+    </script>
+</body>
+
+</html>

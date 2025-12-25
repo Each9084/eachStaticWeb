@@ -2,19 +2,21 @@
  * Navbar Component for Each Static Web
  * 修正 Vercel 部署后的路径与高亮逻辑
  */
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     // 获取当前页面完整路径并标准化
     const pathName = window.location.pathname.toLowerCase();
-    
+
     // 判断是否在 pages 目录下
     // 兼容 /pages/About.html 或 /pages/About (Vercel 自动去掉后缀)
     const isSubPage = pathName.includes('/pages/');
-    
+
     // 定义不同环境下的基础链接
     const config = {
         index: isSubPage ? '../index.html' : './index.html',
         about: isSubPage ? './About.html' : './pages/About.html',
-        blog:  isSubPage ? './Blog.html'  : './pages/Blog.html'
+        blog: isSubPage ? './Blog.html' : './pages/Blog.html',
+        // 在 pathConfig 里加入
+        editor: isSubPage ? './mdEditor.html' : './pages/mdEditor.html'
     };
 
     const navbarHTML = `
@@ -30,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <a href="${config.index}" data-page="index" class="nav-link hover:text-blue-600 transition">主页</a>
                 <a href="${config.about}" data-page="about" class="nav-link hover:text-blue-600 transition">关于</a>
                 <a href="${config.blog}"  data-page="blog"  class="nav-link hover:text-blue-600 transition">博客</a>
+                <a href="${config.editor}" data-page="editor"  class="nav-link hover:text-blue-600 transition">编辑器</a>
                 <a href="https://github.com/Each9084" target="_blank" class="flex items-center hover:text-[#39d353] transition">
                     <i class="fab fa-github text-xl mr-2"></i> Github
                 </a>
@@ -64,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // 主题切换逻辑
     const themeBtn = document.getElementById('themeToggle');
     const modeIcon = document.getElementById('modeIcon');
-    
+
     const updateIcon = (isDark) => {
         if (!modeIcon) return;
         modeIcon.className = isDark ? 'fas fa-moon text-blue-200 text-lg' : 'fas fa-sun text-orange-400 text-lg';
