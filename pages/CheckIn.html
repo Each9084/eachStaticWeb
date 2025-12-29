@@ -16,8 +16,7 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;900&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Noto+Sans+SC:wght@400;900&display=swap');
 
         :root {
             --bg-color: #f5f5f7;
@@ -31,17 +30,16 @@
         }
 
         body {
-            font-family: -apple-system, "SF Pro SC", "PingFang SC", sans-serif;
+            font-family: -apple-system, "SF Pro SC", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: all 0.5s ease;
         }
 
-        /* 哥特字体 Logo 样式 (同步 index) */
+        /* 修复哥特字体样式 */
         .gothic-logo {
             font-family: 'UnifrakturMaguntia', serif !important;
             font-size: 1.5rem;
-            letter-spacing: -0.02em;
         }
 
         /* 日历格子 */
@@ -70,7 +68,7 @@
             background: rgba(255, 255, 255, 0.03);
         }
 
-        /* 麦穗奖励背景 */
+        /* 麦穗背景奖励 */
         .wreath-bg {
             position: absolute;
             inset: 0;
@@ -83,7 +81,6 @@
 
         .calendar-day.today {
             border: 2px solid var(--accent-blue);
-            background: rgba(0, 113, 227, 0.05);
         }
 
         .calendar-day.today::before {
@@ -96,13 +93,13 @@
             letter-spacing: 1px;
         }
 
-        /* 弹窗样式 */
+        /* 英雄动画弹窗 */
         #hero-modal {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 2000;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(20px);
             align-items: center;
             justify-content: center;
@@ -121,12 +118,11 @@
             background: var(--bg-color);
             padding: 2.5rem;
             border-radius: 3rem;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
             transform-origin: center;
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* 冲突条幅 */
+        /* 冲突警告条幅 */
         #conflict-banner {
             height: 0;
             overflow: hidden;
@@ -140,21 +136,20 @@
         }
 
         #conflict-banner.active {
-            height: 32px;
-            line-height: 32px;
+            height: 30px;
+            line-height: 30px;
         }
 
-        /* 三态 Box */
+        /* 三态复选框 */
         .status-box {
-            width: 24px;
-            height: 24px;
-            border-radius: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
             border: 2px solid rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .status-done {
@@ -180,6 +175,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            box-shadow: 0 4px 10px rgba(0, 113, 227, 0.2);
         }
 
         .grid-bg {
@@ -189,17 +185,6 @@
             background-size: 40px 40px;
             opacity: 0.03;
             z-index: -1;
-        }
-
-        /* 月份选择器美化 */
-        #jump-month {
-            background: transparent;
-            border: none;
-            font-family: monospace;
-            font-weight: 900;
-            color: var(--accent-blue);
-            outline: none;
-            cursor: pointer;
         }
     </style>
 </head>
@@ -224,43 +209,53 @@
                 </p>
             </div>
 
-            <div class="flex flex-col items-end gap-2">
-                <div id="login-trigger" class="g_id_signin" data-type="icon" data-shape="circle"></div>
-                <div class="flex items-center gap-2 text-xl font-black text-blue-600 font-mono italic">
-                    <i class="far fa-calendar-alt text-sm"></i>
-                    <input type="month" id="jump-month" onchange="jumpToDate()">
-                </div>
+            <div class="flex items-center gap-4">
+                <input type="date" id="date-jump-picker" onchange="jumpToDate()"
+                    class="bg-blue-600/10 text-blue-600 text-[11px] font-bold px-4 py-2 rounded-xl border-none outline-none cursor-pointer">
+                <div id="current-month-display" class="text-2xl font-black text-blue-600 font-mono italic">2025.12</div>
             </div>
         </header>
 
         <div class="calendar-grid" id="calendar"></div>
 
         <div class="relative mt-12">
-            <div id="conflict-banner">⚠️ 该日期已有打卡条目，请点击上方日历进入编辑模式</div>
+            <div id="conflict-banner">⚠️ 该日期已有打卡条目，请点击下方日历卡片进入编辑模式</div>
             <div id="input-zone"
                 class="p-10 rounded-b-[3.5rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5 opacity-50 pointer-events-none transition-all">
                 <div class="flex justify-between items-center mb-6">
                     <h3 id="input-header" class="font-bold flex items-center gap-3"><i
                             class="fas fa-fingerprint text-blue-500"></i> 等待身份验证...</h3>
                     <span id="editing-date-display"
-                        class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-md font-mono font-bold tracking-tighter">TARGET:
+                        class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-md font-mono font-bold uppercase tracking-widest">Target:
                         ----</span>
                 </div>
 
                 <div id="task-preview-area" class="flex flex-wrap mb-6"></div>
                 <textarea id="task-input" rows="1"
                     class="w-full bg-transparent border-none p-0 text-xl font-medium focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 resize-none overflow-hidden"
-                    placeholder="添加新任务, Enter 分离..."></textarea>
+                    placeholder="键入今日文稿条目, Enter 分离..."></textarea>
 
                 <div class="mt-10 flex justify-between items-center">
                     <div class="flex items-center gap-2 text-[10px] text-gray-400 font-mono"><span
                             class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> SYSTEM READY</div>
                     <button onclick="doCheckIn()"
-                        class="px-10 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition shadow-2xl">同步至云端</button>
+                        class="px-10 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition shadow-2xl">上传云端存储</button>
                 </div>
             </div>
         </div>
     </main>
+
+    <div id="name-modal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md">
+        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm">
+            <h2 class="text-2xl font-black mb-6">新身份识别</h2>
+            <input id="nickname-input" type="text"
+                class="w-full bg-zinc-100 dark:bg-zinc-800 p-5 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500 text-center font-bold"
+                placeholder="输入实验室代号">
+            <button onclick="confirmNickname()"
+                class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black">建立连接</button>
+        </div>
+    </div>
 
     <div id="hero-modal" onclick="closeHero()">
         <div id="modal-content" class="modal-content" onclick="event.stopPropagation()">
@@ -276,21 +271,9 @@
         </div>
     </div>
 
-    <div id="name-modal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md">
-        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm">
-            <h2 class="text-2xl font-black mb-6">新身份识别</h2>
-            <input id="nickname-input" type="text"
-                class="w-full bg-zinc-100 dark:bg-zinc-800 p-5 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500 text-center font-bold"
-                placeholder="输入实验室代号">
-            <button onclick="confirmNickname()"
-                class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black">建立连接</button>
-        </div>
-    </div>
-
     <div id="success-toast"
-        class="fixed bottom-[-100px] left-1/2 -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-full z-50 transition-all duration-500 font-bold">
-        已同步云端</div>
+        class="fixed bottom-[-100px] left-1/2 -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-full z-50 transition-all duration-500 font-bold shadow-xl">
+        同步成功</div>
 
     <script>
         const calendarEl = document.getElementById('calendar');
@@ -298,21 +281,21 @@
         const taskInput = document.getElementById('task-input');
         const previewArea = document.getElementById('task-preview-area');
         const conflictBanner = document.getElementById('conflict-banner');
-        const monthPicker = document.getElementById('jump-month');
 
         let now = new Date();
-        let viewYear = now.getFullYear();
-        let viewMonth = now.getMonth(); // 0-11
+        let year = now.getFullYear();
+        let month = now.getMonth();
         let currentTasks = [];
         let loginUser = null;
         let googleSub = null;
         let cloudData = {};
-        let editingDate = `${viewYear}-${viewMonth + 1}-${now.getDate()}`;
+        let editingDate = `${year}-${month + 1}-${now.getDate()}`;
 
         window.onload = () => {
-            monthPicker.value = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
-            updateEditingDateDisplay();
             loadCheckInData();
+            updateEditingDateDisplay();
+            // 初始化月份显示
+            document.getElementById('current-month-display').innerText = `${year}.${month + 1}`;
         };
 
         function handleSignIn(response) {
@@ -335,7 +318,7 @@
         function initUserSession(name) {
             loginUser = name;
             document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
-            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 已识别: ${name}`;
+            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 已授权: ${name}`;
             loadCheckInData();
         }
 
@@ -343,27 +326,25 @@
             try {
                 const res = await fetch('/api/checkin');
                 cloudData = await res.json();
-                updateUserList();
-                renderCalendar(userSelector.value || loginUser);
+                const users = Object.keys(cloudData);
+                userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>👤 ${u}</option>`).join('');
+                renderCalendar(userSelector.value || loginUser || users[0]);
                 checkConflict();
             } catch (e) { console.error(e); }
         }
 
         function renderCalendar(targetUser) {
             calendarEl.innerHTML = '';
-            // 获取当月最后一天 (即总天数)
-            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+            // 动态计算当月天数
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
             const userData = cloudData[targetUser] || {};
-            const today = new Date();
+            const today = now.getDate();
 
             for (let i = 1; i <= daysInMonth; i++) {
-                const dateKey = `${viewYear}-${viewMonth + 1}-${i}`;
+                const dateKey = `${year}-${month + 1}-${i}`;
                 const rawData = userData[dateKey];
                 const day = document.createElement('div');
-
-                // 判断是否为今天
-                const isToday = i === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-                day.className = `calendar-day ${isToday ? 'today' : ''}`;
+                day.className = `calendar-day ${i === today && month === now.getMonth() ? 'today' : ''}`;
                 day.innerHTML = `<span class="font-mono text-xs font-black opacity-20 z-10">${i}</span>`;
 
                 if (rawData) {
@@ -375,7 +356,7 @@
                     if (allDone) day.innerHTML += `<div class="wreath-bg"></div>`;
 
                     const dot = document.createElement('div');
-                    dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
+                    dot.className = 'dot w-1.5 h-1.5 rounded-full mt-2';
                     dot.style.background = allDone ? '#10b981' : (allFail ? '#ef4444' : (anyDone ? '#f59e0b' : '#10b981'));
                     day.appendChild(dot);
 
@@ -392,8 +373,25 @@
             }
         }
 
+        function jumpToDate() {
+            const picker = document.getElementById('date-jump-picker');
+            if (picker.value) {
+                const parts = picker.value.split('-'); // [2025, 12, 29]
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                editingDate = `${year}-${month + 1}-${parseInt(parts[2])}`;
+
+                document.getElementById('current-month-display').innerText = `${year}.${month + 1}`;
+                updateEditingDateDisplay();
+                loadCheckInData(); // 触发重新渲染
+                checkConflict();
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        }
+
         function openHero(event, date, user, rawData) {
             editingDate = date;
+            updateEditingDateDisplay();
             const modal = document.getElementById('hero-modal');
             const content = document.getElementById('modal-content');
             const rect = event.currentTarget.getBoundingClientRect();
@@ -407,7 +405,7 @@
                 content.style.transform = `translate(0, 0) scale(1)`;
             }, 10);
 
-            document.getElementById('modal-date').innerText = `NODE: ${date} // ${user}`;
+            document.getElementById('modal-date').innerText = `${date} // ${user}`;
             let items = JSON.parse(rawData);
 
             const renderModalList = () => {
@@ -415,7 +413,7 @@
                     <div class="task-item flex items-center gap-4 p-3 bg-black/5 rounded-xl">
                         <div class="status-box ${item.status === 1 ? 'status-done' : (item.status === 2 ? 'status-fail' : '')}" 
                              onclick="cycleStatus(${idx})">
-                            ${item.status === 1 ? '✓' : (item.status === 2 ? '×' : '')}
+                            ${item.status === 1 ? '<i class="fas fa-check"></i>' : (item.status === 2 ? '<i class="fas fa-times"></i>' : '')}
                         </div>
                         <span class="text-sm font-bold opacity-80">${item.text}</span>
                     </div>
@@ -426,7 +424,7 @@
                 if (user !== loginUser) return;
                 items[idx].status = (items[idx].status + 1) % 3;
                 renderModalList();
-                saveSilent(date, items);
+                saveInstant(date, items);
             };
 
             renderModalList();
@@ -441,7 +439,8 @@
             };
         }
 
-        async function saveSilent(date, tasks) {
+        async function saveInstant(date, tasks) {
+            if (!loginUser) return;
             await fetch('/api/checkin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -458,13 +457,6 @@
 
         function updateEditingDateDisplay() {
             document.getElementById('editing-date-display').innerText = `TARGET: ${editingDate}`;
-        }
-
-        function jumpToDate() {
-            const [y, m] = monthPicker.value.split('-');
-            viewYear = parseInt(y);
-            viewMonth = parseInt(m) - 1;
-            renderCalendar(userSelector.value || loginUser);
         }
 
         taskInput.addEventListener('keydown', (e) => {
@@ -504,11 +496,6 @@
                 await loadCheckInData();
                 setTimeout(() => toast.style.bottom = '-100px', 3000);
             }
-        }
-
-        function updateUserList() {
-            const users = Object.keys(cloudData);
-            userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>👤 ${u}</option>`).join('');
         }
 
         function toggleTaskStatus(i) { currentTasks[i].status = (currentTasks[i].status + 1) % 3; renderChips(); }
