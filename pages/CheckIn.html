@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>打卡记录 | Each Static Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script>
+      if (
+        localStorage.getItem("theme") === "dark" ||
+        (!("theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark-mode");
+      }
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;900&display=swap");
+
+      :root {
+        --bg-color: #f5f5f7;
+        --text-color: #1d1d1f;
+        --accent-blue: #0071e3;
+      }
+      .dark-mode {
+        --bg-color: #000000;
+        --text-color: #f5f5f7;
+      }
+
+      body {
+        font-family: -apple-system, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: all 0.5s ease;
+      }
+      .gothic-logo {
+        font-family: "UnifrakturMaguntia", serif !important;
+      }
+
+      /* 日历与英雄动画 */
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 12px;
+      }
+      .calendar-day {
+        aspect-ratio: 1;
+        border-radius: 1.2rem;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .dark-mode .calendar-day {
+        background: rgba(28, 28, 30, 0.8);
+        border-color: rgba(255, 255, 255, 0.05);
+      }
+      .calendar-day:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent-blue);
+      }
+
+      /* 状态标记 */
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #10b981;
+        position: absolute;
+        bottom: 8px;
+      }
+
+      /* 英雄动画弹窗 */
+      #hero-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-content {
+        width: 90%;
+        max-width: 400px;
+        background: var(--bg-color);
+        padding: 2rem;
+        border-radius: 2.5rem;
+        transform: scale(0.8);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      #hero-modal.active {
+        display: flex;
+      }
+      #hero-modal.active .modal-content {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      /* 紧凑型成功通知 */
+      #success-toast {
+        position: fixed;
+        bottom: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        z-index: 100;
+        transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      }
+      #success-toast.active {
+        bottom: 40px;
+      }
+
+      .grid-bg {
+        position: fixed;
+        inset: 0;
+        background-image: radial-gradient(
+          circle,
+          var(--text-color) 1px,
+          transparent 1px
+        );
+        background-size: 40px 40px;
+        opacity: 0.03;
+        z-index: -1;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <div class="grid-bg"></div>
+    <script src="../components/navbar.js"></script>
+
+    <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
+      <header
+        class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6"
+      >
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h1
+              class="text-4xl font-black tracking-tight"
+              style="font-family: 'Noto Sans SC'"
+            >
+              打卡实验室
+            </h1>
+            <select
+              id="user-selector"
+              onchange="loadCheckInData()"
+              class="bg-blue-600/10 text-blue-600 text-xs font-bold px-3 py-1 rounded-full border-none outline-none cursor-pointer"
+            >
+              <option value="Each">Each</option>
+              <option value="PartnerA">小伙伴 A</option>
+              <option value="PartnerB">小伙伴 B</option>
+            </select>
+          </div>
+          <p
+            class="text-gray-400 font-mono uppercase text-[10px] tracking-[0.2em]"
+          >
+            Synchronized with Vercel KV Storage
+          </p>
+        </div>
+        <div
+          id="current-month"
+          class="text-xl font-bold text-blue-600 font-mono"
+        >
+          2025.12
+        </div>
+      </header>
+
+      <div class="calendar-grid" id="calendar"></div>
+
+      <div
+        class="mt-12 p-8 rounded-[2.5rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5"
+      >
+        <div class="flex items-center gap-3 mb-6">
+          <div
+            class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"
+          >
+            <i class="fas fa-pen-nib"></i>
+          </div>
+          <h3 class="font-bold">撰写今日同步文稿</h3>
+        </div>
+        <textarea
+          id="task-input"
+          rows="3"
+          class="w-full bg-transparent border-none p-0 text-lg focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 transition"
+          placeholder="输入今天的学习收获或目标..."
+        ></textarea>
+        <div class="mt-8 flex justify-end">
+          <button
+            onclick="doCheckIn()"
+            class="group flex items-center gap-3 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-2xl font-bold hover:scale-105 active:scale-95 transition"
+          >
+            同步并打卡
+            <i
+              class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"
+            ></i>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <div id="hero-modal" onclick="closeHero()">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div
+          id="modal-date"
+          class="text-[10px] font-mono text-blue-500 tracking-widest uppercase mb-2"
+        >
+          DATE: 2025-12-29
+        </div>
+        <h2 id="modal-user" class="text-2xl font-black mb-4">User: Each</h2>
+        <div
+          id="modal-text"
+          class="text-gray-500 dark:text-gray-400 leading-relaxed italic"
+        >
+          这里显示打卡内容...
+        </div>
+        <button
+          onclick="closeHero()"
+          class="mt-8 w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold"
+        >
+          关闭窗口
+        </button>
+      </div>
+    </div>
+
+    <div id="success-toast">
+      <i class="fas fa-check-circle"></i>
+      <span class="font-bold">打卡成功！坚持学习</span>
+      <button onclick="closeToast()" class="ml-2 opacity-50 hover:opacity-100">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <script>
+      // 注意：由于这是静态 HTML，直接操作 KV 需要后端。
+      // 你需要在 Vercel 部署一个简单的 API Route (/api/checkin)。
+      // 这里先用 LocalStorage 模拟多用户逻辑，结构与 KV 完全一致。
+
+      const calendarEl = document.getElementById("calendar");
+      const userSelector = document.getElementById("user-selector");
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      async function loadCheckInData() {
+        const currentUser = userSelector.value;
+        calendarEl.innerHTML =
+          '<div class="col-span-7 text-center py-10 opacity-30 animate-pulse">正在同步云端数据...</div>';
+
+        try {
+          const response = await fetch("/api/checkin");
+          const allData = await response.json();
+          // 渲染日历，将从 API 获取的数据传入
+          renderCalendar(currentUser, allData);
+        } catch (error) {
+          console.error("同步失败:", error);
+          calendarEl.innerHTML =
+            '<div class="col-span-7 text-center py-10 text-rose-500">云端节点连接失败</div>';
+        }
+      }
+
+      function renderCalendar(user) {
+        calendarEl.innerHTML = "";
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const allData = JSON.parse(
+          localStorage.getItem("kv_checkin_store") || "{}"
+        );
+        const userData = allData[user] || {};
+
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dateKey = `${year}-${month + 1}-${i}`;
+          const hasData = userData[dateKey];
+
+          const dayBox = document.createElement("div");
+          dayBox.className = "calendar-day";
+          dayBox.innerHTML = `<span class="font-mono text-sm font-bold opacity-30">${i}</span>`;
+
+          if (hasData) {
+            dayBox.innerHTML += `<div class="dot"></div>`;
+            dayBox.onclick = () => openHero(dateKey, user, hasData);
+          } else {
+            dayBox.style.cursor = "default";
+            dayBox.style.opacity = "0.4";
+          }
+
+          calendarEl.appendChild(dayBox);
+        }
+      }
+
+      function openHero(date, user, text) {
+        document.getElementById("modal-date").innerText = `DATE: ${date}`;
+        document.getElementById("modal-user").innerText = `User: ${user}`;
+        document.getElementById("modal-text").innerText = `“ ${text} ”`;
+        document.getElementById("hero-modal").classList.add("active");
+      }
+
+      function closeHero() {
+        document.getElementById("hero-modal").classList.remove("active");
+      }
+
+      async function doCheckIn() {
+        const user = userSelector.value;
+        const text = document.getElementById("task-input").value;
+        const dateKey = `${year}-${month + 1}-${now.getDate()}`;
+
+        if (!text) return;
+
+        try {
+          const response = await fetch("/api/checkin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user, date: dateKey, text }),
+          });
+
+          if (response.ok) {
+            // 显示 Toast
+            const toast = document.getElementById("success-toast");
+            toast.classList.add("active");
+
+            // 重新加载数据
+            await loadCheckInData();
+
+            setTimeout(closeToast, 3000);
+          }
+        } catch (error) {
+          alert("打卡失败，请检查网络连接");
+        }
+      }
+
+      function closeToast() {
+        document.getElementById("success-toast").classList.remove("active");
+      }
+
+      loadCheckInData();
+    </script>
+  </body>
+</html>

@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
-        // 防止主题切换闪烁
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark-mode');
         }
@@ -26,11 +25,15 @@
             --bg-color: #f5f5f7;
             --text-color: #1d1d1f;
             --accent-blue: #0071e3;
+            --inline-code-bg: #f3f3f3;
+            --inline-code-color: #e03131;
         }
 
         .dark-mode {
             --bg-color: #000000;
             --text-color: #f5f5f7;
+            --inline-code-bg: #2c2c2e;
+            --inline-code-color: #ff8787;
         }
 
         body {
@@ -41,7 +44,6 @@
             min-height: 100vh;
         }
 
-        /* 流光文字特效 */
         .working-gradient {
             background: linear-gradient(90deg, #86868b, #1d1d1f, #86868b);
             background-size: 200% auto;
@@ -60,7 +62,6 @@
             }
         }
 
-        /* 波点背景 */
         .grid-bg {
             position: fixed;
             inset: 0;
@@ -70,7 +71,6 @@
             z-index: -1;
         }
 
-        /* 博客卡片样式 */
         .blog-card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
@@ -90,7 +90,6 @@
             border-color: var(--accent-blue);
         }
 
-        /* Markdown 内容高级排版美化 */
         .markdown-body {
             text-align: justify;
             line-height: 1.8;
@@ -173,7 +172,7 @@
             border-top: 1px solid #2c2c2e;
         }
 
-        /* 引用块与代码块 */
+        /* 引用块 */
         .markdown-body blockquote {
             border-left: 4px solid var(--accent-blue);
             padding: 0.8rem 1.5rem;
@@ -183,10 +182,40 @@
             font-style: italic;
         }
 
+        /* 1. 代码块美化：灰色凹陷卡片感 */
         .markdown-body pre {
+            background-color: #2d2d2d !important;
             border-radius: 1rem !important;
             margin: 1.5rem 0 !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            /* 增强凹陷感 */
+            box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.3), inset 0 -2px 5px rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            padding: 0.75rem !important;
+            overflow-x: auto;
+        }
+
+        /* 确保代码文字清晰 */
+        .markdown-body pre code {
+            color: #e1e1e1 !important;
+            font-family: 'Fira Code', 'Consolas', monospace !important;
+            text-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        /* 2. 行内代码样式：凸起卡片感 (类似 Typora) */
+        .markdown-body :not(pre)>code {
+            background-color: var(--inline-code-bg) !important;
+            color: var(--inline-code-color) !important;
+            padding: 0.2rem 0.4rem !important;
+            border-radius: 4px !important;
+            font-size: 0.9em !important;
+            font-family: 'Fira Code', 'Consolas', monospace !important;
+            /* 凸起感效果 */
+            border: 1px solid rgba(0, 0, 0, 0.05) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+            margin: 0 2px;
+            transition: all 0.2s ease;
         }
 
         .animate-reveal {
@@ -245,7 +274,7 @@
 
     <script>
         const GITHUB_USER = 'Each9084';
-        const REPO_NAME = 'eachStaticWeb'; // 已修正为您的仓库名
+        const REPO_NAME = 'eachStaticWeb';
         const BLOG_DIR = 'Blogs';
 
         async function fetchBlogs() {
@@ -257,11 +286,9 @@
                 const blogList = document.getElementById('blog-list');
                 blogList.innerHTML = '';
 
-                // 筛选 .md 文件并倒序排列 (最新的在前)
                 const mdFiles = files.filter(f => f.name.endsWith('.md')).reverse();
 
                 mdFiles.forEach(file => {
-                    // 文件名解析逻辑: 2025-1225-01-标题.md
                     const nameWithoutExt = file.name.replace('.md', '');
                     const parts = nameWithoutExt.split('-');
 
@@ -285,11 +312,7 @@
                     blogList.appendChild(card);
                 });
             } catch (error) {
-                document.getElementById('blog-list').innerHTML = `
-                    <div class="blog-card p-10 text-center">
-                        <i class="fas fa-plug-circle-exclamation text-orange-500 mb-4 text-2xl"></i>
-                        <p class="text-sm font-medium">同步中断。请检查 GitHub 仓库配置或 API 配额。</p>
-                    </div>`;
+                document.getElementById('blog-list').innerHTML = `<div class="blog-card p-10 text-center">失败...</div>`;
             }
         }
 
@@ -317,7 +340,6 @@
                     ${marked.parse(text)}
                 `;
 
-                // 触发 Prism 代码高亮渲染
                 Prism.highlightAllUnder(content);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (error) {
