@@ -16,7 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
         about: isSubPage ? './About.html' : './pages/About.html',
         blog: isSubPage ? './Blog.html' : './pages/Blog.html',
         // 在 pathConfig 里加入
-        editor: isSubPage ? './mdEditor.html' : './pages/mdEditor.html'
+        editor: isSubPage ? './mdEditor.html' : './pages/mdEditor.html',
+        check: isSubPage ? './CheckIn.html' : './pages/CheckIn.html'
     };
 
     const navbarHTML = `
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <a href="${config.about}" data-page="about" class="nav-link hover:text-blue-600 transition">关于</a>
                 <a href="${config.blog}"  data-page="blog"  class="nav-link hover:text-blue-600 transition">博客</a>
                 <a href="${config.editor}" data-page="editor"  class="nav-link hover:text-blue-600 transition">编辑器</a>
+                <a href="${config.check}" data-page="check"  class="nav-link hover:text-blue-600 transition">打卡</a>
                 <a href="https://github.com/Each9084" target="_blank" class="flex items-center hover:text-[#39d353] transition">
                     <i class="fab fa-github text-xl mr-2"></i> Github
                 </a>
