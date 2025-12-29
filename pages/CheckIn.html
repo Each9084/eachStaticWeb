@@ -196,7 +196,7 @@
     <script src="../components/navbar.js"></script>
 
     <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-        data-callback="handleSignIn">
+        data-callback="handleSignIn" data-auto_select="true" data-itp_support="true">
     </div>
 
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
@@ -288,16 +288,41 @@
         let editingDate = null;
 
         // 1. Google 登录处理
+        // 修改后的 handleSignIn 函数
         function handleSignIn(response) {
+            // 这里的 response.credential 是 JWT token
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            googleSub = payload.sub;
+            googleSub = payload.sub; // 用户的 Google 唯一标识
+
+            // 登录成功，记录一个登录状态标记
+            localStorage.setItem('is_logged_in', 'true');
 
             const savedName = localStorage.getItem(`nickname_${googleSub}`);
             if (savedName) {
                 initUserSession(savedName);
             } else {
+                // 如果是新用户（有 Google 账户但没设过实验室昵称），弹出命名框
                 document.getElementById('name-modal').classList.add('active');
             }
+        }
+
+        // 在页面初始化加载处增加逻辑 (在 init 相关的代码块中)
+        window.onload = function () {
+            // 检查是否之前登录过
+            const wasLoggedIn = localStorage.getItem('is_logged_in');
+
+            if (wasLoggedIn === 'true') {
+                // 如果之前登录过，Google 会因为 data-auto_select="true" 自动调用 handleSignIn
+                // 我们可以显示一个微小的加载提示
+                console.log("尝试自动登录中...");
+            }
+        };
+
+        // 建议增加一个“退出登录”功能（可选），否则自动登录会一直生效
+        function signOut() {
+            google.accounts.id.disableAutoSelect(); // 禁用自动选择
+            localStorage.removeItem('is_logged_in'); // 移除登录标记
+            location.reload(); // 刷新页面
         }
 
         function confirmNickname() {
