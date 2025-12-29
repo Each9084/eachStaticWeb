@@ -2,23 +2,22 @@
 <html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>打卡记录 | Each Static Web</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打卡实验室 | Each Static Web</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script>
-        if (
-            localStorage.getItem("theme") === "dark" ||
-            (!("theme" in localStorage) &&
-                window.matchMedia("(prefers-color-scheme: dark)").matches)
-        ) {
-            document.documentElement.classList.add("dark-mode");
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
         }
     </script>
+
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap");
-        @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;900&display=swap");
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;900&display=swap');
 
         :root {
             --bg-color: #f5f5f7;
@@ -36,13 +35,14 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: all 0.5s ease;
+            overflow-x: hidden;
         }
 
         .gothic-logo {
-            font-family: "UnifrakturMaguntia", serif !important;
+            font-family: 'UnifrakturMaguntia', serif !important;
         }
 
-        /* 日历与英雄动画 */
+        /* 日历格子 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -60,7 +60,6 @@
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: hidden;
         }
 
         .dark-mode .calendar-day {
@@ -71,9 +70,9 @@
         .calendar-day:hover {
             transform: translateY(-4px);
             border-color: var(--accent-blue);
+            z-index: 10;
         }
 
-        /* 状态标记 */
         .dot {
             width: 6px;
             height: 6px;
@@ -81,6 +80,7 @@
             background: #10b981;
             position: absolute;
             bottom: 8px;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
         }
 
         /* 英雄动画弹窗 */
@@ -88,9 +88,9 @@
             display: none;
             position: fixed;
             inset: 0;
-            z-index: 50;
+            z-index: 2000;
             background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             align-items: center;
             justify-content: center;
         }
@@ -99,11 +99,12 @@
             width: 90%;
             max-width: 400px;
             background: var(--bg-color);
-            padding: 2rem;
-            border-radius: 2.5rem;
-            transform: scale(0.8);
+            padding: 2.5rem;
+            border-radius: 3rem;
+            transform: scale(0.9);
             opacity: 0;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         #hero-modal.active {
@@ -115,7 +116,49 @@
             opacity: 1;
         }
 
-        /* 紧凑型成功通知 */
+        /* 命名弹窗 */
+        #name-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #name-modal.active {
+            display: flex;
+        }
+
+        /* 任务标签 */
+        .task-chip {
+            background: #0071e3;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         #success-toast {
             position: fixed;
             bottom: -100px;
@@ -123,13 +166,13 @@
             transform: translateX(-50%);
             background: #10b981;
             color: white;
-            padding: 12px 24px;
-            border-radius: 1.5rem;
+            padding: 14px 28px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
             box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-            z-index: 100;
+            z-index: 1000;
             transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
@@ -140,9 +183,7 @@
         .grid-bg {
             position: fixed;
             inset: 0;
-            background-image: radial-gradient(circle,
-                    var(--text-color) 1px,
-                    transparent 1px);
+            background-image: radial-gradient(circle, var(--text-color) 1px, transparent 1px);
             background-size: 40px 40px;
             opacity: 0.03;
             z-index: -1;
@@ -154,176 +195,239 @@
     <div class="grid-bg"></div>
     <script src="../components/navbar.js"></script>
 
+    <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
+        data-callback="handleSignIn">
+    </div>
+
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
         <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-4xl font-black tracking-tight" style="font-family: 'Noto Sans SC'">
-                        打卡实验室
-                    </h1>
-                    <select id="user-selector" onchange="loadCheckInData()"
-                        class="bg-blue-600/10 text-blue-600 text-xs font-bold px-3 py-1 rounded-full border-none outline-none cursor-pointer">
-                        <option value="Each">Each</option>
-                        <option value="PartnerA">小伙伴 A</option>
-                        <option value="PartnerB">小伙伴 B</option>
+                <div class="flex items-center gap-4 mb-2">
+                    <h1 class="text-4xl font-black tracking-tight" style="font-family: 'Noto Sans SC'">打卡实验室</h1>
+                    <select id="user-selector" onchange="switchUserView()"
+                        class="bg-blue-600/10 text-blue-600 text-[10px] font-black px-4 py-1.5 rounded-full border-none outline-none cursor-pointer uppercase tracking-widest">
+                        <option value="">载入伙伴...</option>
                     </select>
                 </div>
-                <p class="text-gray-400 font-mono uppercase text-[10px] tracking-[0.2em]">
-                    Synchronized with Vercel KV Storage
-                </p>
+                <p class="text-gray-400 font-mono text-[10px] tracking-[0.2em]">CONNECTED TO VERCEL KV // EACH-NET</p>
             </div>
-            <div id="current-month" class="text-xl font-bold text-blue-600 font-mono">
-                2025.12
-            </div>
+            <div id="current-month" class="text-xl font-bold text-blue-600 font-mono">2025.12</div>
         </header>
 
         <div class="calendar-grid" id="calendar"></div>
 
-        <div
-            class="mt-12 p-8 rounded-[2.5rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5">
-            <div class="flex items-center gap-3 mb-6">
-                <div
-                    class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                    <i class="fas fa-pen-nib"></i>
-                </div>
-                <h3 class="font-bold">撰写今日同步文稿</h3>
-            </div>
-            <textarea id="task-input" rows="3"
-                class="w-full bg-transparent border-none p-0 text-lg focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 transition"
-                placeholder="输入今天的学习收获或目标..."></textarea>
-            <div class="mt-8 flex justify-end">
+        <div id="input-zone"
+            class="mt-12 p-10 rounded-[3rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5 opacity-50 pointer-events-none transition-all">
+            <h3 id="input-header" class="font-bold mb-6 flex items-center gap-3">
+                <i class="fas fa-lock text-xs opacity-40"></i> 请先通过 Google 登录以解锁打卡
+            </h3>
+
+            <div id="task-preview-area" class="flex flex-wrap mb-4"></div>
+
+            <textarea id="task-input" rows="1"
+                class="w-full bg-transparent border-none p-0 text-xl focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 resize-none overflow-hidden"
+                placeholder="输入内容后回车分条..."></textarea>
+
+            <div class="mt-10 flex justify-between items-center">
+                <span class="text-[10px] text-gray-400 font-mono">NODE: VERCEL_SERVERLESS_01</span>
                 <button onclick="doCheckIn()"
-                    class="group flex items-center gap-3 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-2xl font-bold hover:scale-105 active:scale-95 transition">
-                    同步并打卡
-                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    class="px-10 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition shadow-xl">
+                    确认同步文稿
                 </button>
             </div>
         </div>
     </main>
 
+    <div id="name-modal">
+        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm shadow-2xl">
+            <h2 class="text-2xl font-black mb-2">欢迎来到实验室</h2>
+            <p class="text-sm text-gray-400 mb-8">检测到新身份，请设定你的打卡昵称</p>
+            <input id="nickname-input" type="text"
+                class="w-full bg-zinc-100 dark:bg-zinc-800 p-5 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500 transition text-center font-bold"
+                placeholder="例如: Each">
+            <button onclick="confirmNickname()"
+                class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-500/30">激活通行证</button>
+        </div>
+    </div>
+
     <div id="hero-modal" onclick="closeHero()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-date" class="text-[10px] font-mono text-blue-500 tracking-widest uppercase mb-2">
-                DATE: 2025-12-29
+            <div id="modal-date" class="text-[10px] font-mono text-blue-500 tracking-widest uppercase mb-4">DATE:
+                2025-12-29</div>
+            <div id="modal-text-content" class="space-y-4 mb-10">
             </div>
-            <h2 id="modal-user" class="text-2xl font-black mb-4">User: Each</h2>
-            <div id="modal-text" class="text-gray-500 dark:text-gray-400 leading-relaxed italic">
-                这里显示打卡内容...
+            <div id="edit-zone" class="hidden">
+                <button id="edit-trigger-btn"
+                    class="w-full py-4 bg-blue-600/10 text-blue-600 rounded-2xl text-xs font-bold hover:bg-blue-600 hover:text-white transition">
+                    编辑此日内容
+                </button>
             </div>
             <button onclick="closeHero()"
-                class="mt-8 w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-bold">
-                关闭窗口
-            </button>
+                class="mt-4 w-full py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50">返回日历</button>
         </div>
     </div>
 
     <div id="success-toast">
         <i class="fas fa-check-circle"></i>
-        <span class="font-bold">打卡成功！坚持学习</span>
-        <button onclick="closeToast()" class="ml-2 opacity-50 hover:opacity-100">
-            <i class="fas fa-times"></i>
-        </button>
+        <span class="text-xs font-black uppercase tracking-widest">同步成功 // 坚持学习</span>
     </div>
 
     <script>
-        // 注意：由于这是静态 HTML，直接操作 KV 需要后端。
-        // 你需要在 Vercel 部署一个简单的 API Route (/api/checkin)。
-        // 这里先用 LocalStorage 模拟多用户逻辑，结构与 KV 完全一致。
+        const calendarEl = document.getElementById('calendar');
+        const userSelector = document.getElementById('user-selector');
+        const taskInput = document.getElementById('task-input');
+        const previewArea = document.getElementById('task-preview-area');
 
-        const calendarEl = document.getElementById("calendar");
-        const userSelector = document.getElementById("user-selector");
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = now.getMonth();
+        let currentTasks = [];
+        let loginUser = null;
+        let googleSub = null;
+        let cloudData = {};
+        let editingDate = null;
 
-        async function loadCheckInData() {
-            const currentUser = userSelector.value;
-            calendarEl.innerHTML =
-                '<div class="col-span-7 text-center py-10 opacity-30 animate-pulse">正在同步云端数据...</div>';
+        // 1. Google 登录处理
+        function handleSignIn(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            googleSub = payload.sub;
 
-            try {
-                const response = await fetch("/api/checkin");
-                const allData = await response.json();
-                // 渲染日历，将从 API 获取的数据传入
-                renderCalendar(currentUser, allData);
-            } catch (error) {
-                console.error("同步失败:", error);
-                calendarEl.innerHTML =
-                    '<div class="col-span-7 text-center py-10 text-rose-500">云端节点连接失败</div>';
+            const savedName = localStorage.getItem(`nickname_${googleSub}`);
+            if (savedName) {
+                initUserSession(savedName);
+            } else {
+                document.getElementById('name-modal').classList.add('active');
             }
         }
 
-        function renderCalendar(user) {
-            calendarEl.innerHTML = "";
+        function confirmNickname() {
+            const val = document.getElementById('nickname-input').value.trim();
+            if (val) {
+                localStorage.setItem(`nickname_${googleSub}`, val);
+                initUserSession(val);
+                document.getElementById('name-modal').classList.remove('active');
+            }
+        }
+
+        function initUserSession(name) {
+            loginUser = name;
+            document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 你好, ${name}. 今天完成了什么?`;
+            loadCheckInData();
+        }
+
+        // 2. 分条输入逻辑
+        taskInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = taskInput.value.trim();
+                if (val) {
+                    currentTasks.push(val);
+                    taskInput.value = '';
+                    renderChips();
+                }
+            }
+        });
+
+        function renderChips() {
+            previewArea.innerHTML = currentTasks.map((t, i) => `
+                <div class="task-chip">
+                    <span>${t}</span>
+                    <i class="fas fa-times opacity-50 cursor-pointer" onclick="removeChip(${i})"></i>
+                </div>
+            `).join('');
+        }
+
+        function removeChip(i) { currentTasks.splice(i, 1); renderChips(); }
+
+        // 3. 云端同步逻辑
+        async function loadCheckInData() {
+            try {
+                const res = await fetch('/api/checkin');
+                cloudData = await res.json();
+
+                // 更新用户列表
+                const users = Object.keys(cloudData);
+                userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>${u}</option>`).join('');
+
+                renderCalendar(userSelector.value || loginUser);
+            } catch (e) { console.error("Cloud Sync Failed"); }
+        }
+
+        function renderCalendar(targetUser) {
+            calendarEl.innerHTML = '';
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const allData = JSON.parse(
-                localStorage.getItem("kv_checkin_store") || "{}"
-            );
-            const userData = allData[user] || {};
+            const userData = cloudData[targetUser] || {};
 
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateKey = `${year}-${month + 1}-${i}`;
-                const hasData = userData[dateKey];
+                const text = userData[dateKey];
 
-                const dayBox = document.createElement("div");
-                dayBox.className = "calendar-day";
-                dayBox.innerHTML = `<span class="font-mono text-sm font-bold opacity-30">${i}</span>`;
+                const day = document.createElement('div');
+                day.className = 'calendar-day';
+                day.innerHTML = `<span class="font-mono text-[10px] font-bold opacity-20">${i}</span>`;
 
-                if (hasData) {
-                    dayBox.innerHTML += `<div class="dot"></div>`;
-                    dayBox.onclick = () => openHero(dateKey, user, hasData);
-                } else {
-                    dayBox.style.cursor = "default";
-                    dayBox.style.opacity = "0.4";
+                if (text) {
+                    day.innerHTML += `<div class="dot"></div>`;
+                    day.onclick = () => openHero(dateKey, targetUser, text);
                 }
-
-                calendarEl.appendChild(dayBox);
+                calendarEl.appendChild(day);
             }
         }
 
         function openHero(date, user, text) {
-            document.getElementById("modal-date").innerText = `DATE: ${date}`;
-            document.getElementById("modal-user").innerText = `User: ${user}`;
-            document.getElementById("modal-text").innerText = `“ ${text} ”`;
-            document.getElementById("hero-modal").classList.add("active");
+            editingDate = date;
+            document.getElementById('modal-date').innerText = `DATE: ${date} // NODE: ${user}`;
+            const items = text.split('\n');
+            document.getElementById('modal-text-content').innerHTML = items.map(item => `
+                <div class="p-4 bg-black/5 dark:bg-white/5 rounded-2xl text-sm italic opacity-80 border-l-4 border-blue-500">“ ${item} ”</div>
+            `).join('');
+
+            // 如果是本人，显示编辑按钮
+            const editZone = document.getElementById('edit-zone');
+            if (user === loginUser) {
+                editZone.classList.remove('hidden');
+                document.getElementById('edit-trigger-btn').onclick = () => {
+                    currentTasks = items;
+                    renderChips();
+                    closeHero();
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                };
+            } else {
+                editZone.classList.add('hidden');
+            }
+
+            document.getElementById('hero-modal').classList.add('active');
         }
 
-        function closeHero() {
-            document.getElementById("hero-modal").classList.remove("active");
-        }
+        function closeHero() { document.getElementById('hero-modal').classList.remove('active'); }
 
         async function doCheckIn() {
-            const user = userSelector.value;
-            const text = document.getElementById("task-input").value;
-            const dateKey = `${year}-${month + 1}-${now.getDate()}`;
+            if (!loginUser || currentTasks.length === 0) return;
+            const dateKey = editingDate || `${year}-${month + 1}-${now.getDate()}`;
 
-            if (!text) return;
+            const res = await fetch('/api/checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: loginUser,
+                    date: dateKey,
+                    text: currentTasks.join('\n')
+                })
+            });
 
-            try {
-                const response = await fetch("/api/checkin", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ user, date: dateKey, text }),
-                });
-
-                if (response.ok) {
-                    // 显示 Toast
-                    const toast = document.getElementById("success-toast");
-                    toast.classList.add("active");
-
-                    // 重新加载数据
-                    await loadCheckInData();
-
-                    setTimeout(closeToast, 3000);
-                }
-            } catch (error) {
-                alert("打卡失败，请检查网络连接");
+            if (res.ok) {
+                const toast = document.getElementById('success-toast');
+                toast.classList.add('active');
+                currentTasks = [];
+                editingDate = null;
+                renderChips();
+                await loadCheckInData();
+                setTimeout(() => toast.classList.remove('active'), 3000);
             }
         }
 
-        function closeToast() {
-            document.getElementById("success-toast").classList.remove("active");
-        }
+        function switchUserView() { renderCalendar(userSelector.value); }
 
         loadCheckInData();
     </script>
