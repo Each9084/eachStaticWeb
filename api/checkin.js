@@ -16,8 +16,8 @@ export default async function handler(req, res) {
         // 在 GET 逻辑里临时加入
         if (req.method === 'GET') {
             let data = await kv.get('checkin_data') || {};
-            if (data["TESTBOT"]) {
-                delete data["TESTBOT"]; // 删除这个用户
+            if (data["TestBot"]) {
+                delete data["TestBot"]; // 删除这个用户
                 await kv.set('checkin_data', data); // 写回数据库
             }
             return res.status(200).json(data);
