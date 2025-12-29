@@ -16,7 +16,8 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;900&display=swap');
+        /* 补全哥特体字体导入 */
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Noto+Sans+SC:wght@400;900&display=swap');
 
         :root {
             --bg-color: #f5f5f7;
@@ -34,6 +35,12 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: all 0.5s ease;
+        }
+
+        /* 哥特体类 */
+        .gothic-logo {
+            font-family: 'UnifrakturMaguntia', serif !important;
+            font-size: 1.5rem;
         }
 
         /* 日历样式 */
@@ -236,11 +243,13 @@
 
 <body class="antialiased">
     <div class="grid-bg"></div>
-    <script src="../components/navbar.js"></script>
 
-    <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-        data-callback="handleSignIn" data-auto_select="true" data-itp_support="true">
-    </div>
+    <nav class="fixed top-0 w-full p-6 flex justify-between items-center z-50">
+        <div class="gothic-logo">EachWeb</div>
+        <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
+            data-callback="handleSignIn" data-auto_select="true" data-itp_support="true">
+        </div>
+    </nav>
 
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
         <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -311,9 +320,9 @@
         let loginUser = null;
         let googleSub = null;
         let cloudData = {};
-        let editingDate = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        // 确保月份是 1-12 格式
+        let editingDate = `${year}-${month + 1}-${now.getDate()}`;
 
-        // 登录逻辑
         function handleSignIn(response) {
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
             googleSub = payload.sub;
@@ -335,7 +344,6 @@
             loadCheckInData();
         }
 
-        // 核心：检查日期冲突并显示动画
         function checkDateConflict(date) {
             editingDate = date;
             dateBadge.innerText = date;
@@ -370,13 +378,12 @@
         }
         function removeChip(i) { currentTasks.splice(i, 1); renderChips(); }
 
-        // 日历与数据加载
         async function loadCheckInData() {
             try {
                 const res = await fetch('/api/checkin');
                 cloudData = await res.json();
                 const users = Object.keys(cloudData);
-                userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>${u}</option>`).join('');
+                userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === (userSelector.value || loginUser) ? 'selected' : ''}>${u}</option>`).join('');
                 document.getElementById('current-month').innerText = `${year}.${month + 1}`;
                 renderCalendar(userSelector.value || loginUser || users[0]);
                 checkDateConflict(editingDate);
@@ -385,6 +392,7 @@
 
         function renderCalendar(targetUser) {
             calendarEl.innerHTML = '';
+            // 修正：month + 1 准确获取当月总天数，包括 30 或 31 号
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const userData = cloudData[targetUser] || {};
             const today = new Date();
@@ -393,7 +401,10 @@
                 const dateKey = `${year}-${month + 1}-${i}`;
                 const rawData = userData[dateKey];
                 const day = document.createElement('div');
-                day.className = `calendar-day ${year === today.getFullYear() && month === today.getMonth() && i === today.getDate() ? 'today' : ''}`;
+                // 修正：只有在年份和月份都匹配的情况下才高亮今日
+                const isToday = today.getFullYear() === year && today.getMonth() === month && i === today.getDate();
+
+                day.className = `calendar-day ${isToday ? 'today' : ''}`;
                 day.innerHTML = `<span class="font-mono text-[10px] font-black opacity-20">${i}</span>`;
 
                 if (rawData) {
@@ -401,7 +412,10 @@
                     const doneCount = items.filter(it => it.status === 1).length;
                     const failCount = items.filter(it => it.status === 2).length;
                     let dotClass = "dot-yellow";
-                    if (doneCount === items.length) { dotClass = "dot-green"; day.innerHTML += `<div class="laurel-bg"></div>`; }
+                    if (doneCount === items.length && items.length > 0) {
+                        dotClass = "dot-green";
+                        day.innerHTML += `<div class="laurel-bg"></div>`;
+                    }
                     else if (doneCount === 0 && failCount > 0) { dotClass = "dot-red"; }
                     day.innerHTML += `<div class="dot-container"><div class="dot ${dotClass}"></div></div>`;
                 }
@@ -410,7 +424,6 @@
             }
         }
 
-        // 英雄动画弹窗
         function openHero(event, date, user, rawData) {
             const modal = document.getElementById('hero-modal');
             const content = document.getElementById('modal-content');
@@ -447,7 +460,6 @@
             }
         }
 
-        // 弹窗内直接修改并同步
         async function updateItemStatus(idx, val) {
             const items = JSON.parse(cloudData[loginUser][editingDate]);
             items[idx].status = parseInt(val);
@@ -466,10 +478,20 @@
         function goToMainEdit() { closeHero(); checkDateConflict(editingDate); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
         function closeHero() { document.getElementById('hero-modal').classList.remove('active'); }
         async function doCheckIn() {
+            if (currentTasks.length === 0) return;
             await fetch('/api/checkin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: loginUser, date: editingDate, text: JSON.stringify(currentTasks) }) });
             currentTasks = []; renderChips(); loadCheckInData();
         }
-        function jumpToDate() { const p = document.getElementById('date-jump').value; if (p) { const d = p.split('-'); year = parseInt(d[0]); month = parseInt(d[1]) - 1; editingDate = p; loadCheckInData(); } }
+        function jumpToDate() {
+            const p = document.getElementById('date-jump').value;
+            if (p) {
+                const d = p.split('-');
+                year = parseInt(d[0]);
+                month = parseInt(d[1]) - 1;
+                editingDate = p;
+                loadCheckInData();
+            }
+        }
         function switchUserView() { loadCheckInData(); }
     </script>
 </body>
