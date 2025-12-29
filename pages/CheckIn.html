@@ -182,6 +182,37 @@
             opacity: 0.03;
             z-index: -1;
         }
+
+        /* 全成状态下的卡片背景特殊效果 */
+        .calendar-day.all-done-special {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(16, 185, 129, 0.1) 100%) !important;
+            background-size: 200% 200% !important;
+            animation: shine-bg 3s linear infinite !important;
+            border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+        }
+
+        /* 渐变流动动画 */
+        @keyframes shine-bg {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* 深色模式下的全成效果微调 */
+        .dark-mode .calendar-day.all-done-special {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(28, 28, 30, 0.8) 50%, rgba(16, 185, 129, 0.2) 100%) !important;
+            background-size: 200% 200% !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+        }
     </style>
 </head>
 
@@ -339,7 +370,12 @@
                     const anyDone = items.some(it => it.status === 1);
                     const allFail = items.every(it => it.status === 2);
 
-                    if (allDone) day.innerHTML += `<div class="wreath-bg"></div>`;
+                    //if (allDone) day.innerHTML += `<div class="wreath-bg"></div>`;
+                    // 如果全成，除了麦穗背景，还添加特殊的 CSS 类
+                    if (allDone) {
+                        day.classList.add('all-done-special'); // 添加背景特效类
+                        day.innerHTML += `<div class="wreath-bg"></div>`; // 麦穗图标
+                    }
 
                     const dot = document.createElement('div');
                     dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
