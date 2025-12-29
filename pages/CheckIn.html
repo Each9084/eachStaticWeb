@@ -120,8 +120,8 @@
         #conflict-banner {
             height: 0;
             overflow: hidden;
-            background: #f4ea2a;
-            color: white;
+            background: #ffde5b;
+            color: orange;
             text-align: center;
             font-size: 10px;
             font-weight: 900;
@@ -208,13 +208,23 @@
                     <span id="auth-status-text"
                         class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tighter">Identity: Not
                         Verified</span>
-                    <div id="g_id_onload"
-                        data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-                        data-callback="handleSignIn" data-auto_select="true"></div>
-                    <div class="g_id_signin" data-type="icon" data-shape="circle" data-theme="outline"></div>
+
+                    <div class="flex items-center gap-2">
+                        <div id="g_id_onload"
+                            data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
+                            data-callback="handleSignIn" data-auto_select="true">
+                        </div>
+
+                        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+                            data-text="signin_with" data-size="small" data-logo_alignment="left">
+                        </div>
+
+                        <span class="text-gray-300 mx-1">|</span>
+
+                        <input type="month" id="month-picker" onchange="changeMonth()"
+                            class="bg-blue-600/5 text-blue-600 font-mono font-black px-4 py-1.5 rounded-xl border-none outline-none cursor-pointer text-sm">
+                    </div>
                 </div>
-                <input type="month" id="month-picker" onchange="changeMonth()"
-                    class="bg-blue-600/5 text-blue-600 font-mono font-black px-4 py-2 rounded-xl border-none outline-none cursor-pointer">
             </div>
         </header>
 
