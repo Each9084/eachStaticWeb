@@ -288,42 +288,30 @@
         let editingDate = null;
 
         // 1. Google 登录处理
-        // 修改后的 handleSignIn 函数
         function handleSignIn(response) {
-            // 这里的 response.credential 是 JWT token
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            googleSub = payload.sub; // 用户的 Google 唯一标识
-
-            // 登录成功，记录一个登录状态标记
+            googleSub = payload.sub;
             localStorage.setItem('is_logged_in', 'true');
 
             const savedName = localStorage.getItem(`nickname_${googleSub}`);
             if (savedName) {
                 initUserSession(savedName);
             } else {
-                // 如果是新用户（有 Google 账户但没设过实验室昵称），弹出命名框
                 document.getElementById('name-modal').classList.add('active');
             }
         }
 
-        // 在页面初始化加载处增加逻辑 (在 init 相关的代码块中)
         window.onload = function () {
-            // 检查是否之前登录过
             const wasLoggedIn = localStorage.getItem('is_logged_in');
-
             if (wasLoggedIn === 'true') {
-                // 如果之前登录过，Google 会因为 data-auto_select="true" 自动调用 handleSignIn
-                // 我们可以显示一个微小的加载提示
-                console.log("尝试自动登录中...");
+                console.log("正在尝试自动同步身份...");
+                // 即使是自动登录，也要先获取一次数据以填充下拉框
+                loadCheckInData();
+            } else {
+                // 未登录也加载一次数据，方便“游客”查看
+                loadCheckInData();
             }
         };
-
-        // 建议增加一个“退出登录”功能（可选），否则自动登录会一直生效
-        function signOut() {
-            google.accounts.id.disableAutoSelect(); // 禁用自动选择
-            localStorage.removeItem('is_logged_in'); // 移除登录标记
-            location.reload(); // 刷新页面
-        }
 
         function confirmNickname() {
             const val = document.getElementById('nickname-input').value.trim();
@@ -336,9 +324,11 @@
 
         function initUserSession(name) {
             loginUser = name;
-            document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
+            // 解锁输入区域
+            const inputZone = document.getElementById('input-zone');
+            inputZone.classList.remove('opacity-50', 'pointer-events-none');
             document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 你好, ${name}. 今天完成了什么?`;
-            loadCheckInData();
+            loadCheckInData(); // 登录后刷新数据
         }
 
         // 2. 分条输入逻辑
@@ -356,27 +346,51 @@
 
         function renderChips() {
             previewArea.innerHTML = currentTasks.map((t, i) => `
-                <div class="task-chip">
-                    <span>${t}</span>
-                    <i class="fas fa-times opacity-50 cursor-pointer" onclick="removeChip(${i})"></i>
-                </div>
-            `).join('');
+        <div class="task-chip">
+            <span>${t}</span>
+            <i class="fas fa-times opacity-50 cursor-pointer" onclick="removeChip(${i})"></i>
+        </div>
+    `).join('');
         }
 
         function removeChip(i) { currentTasks.splice(i, 1); renderChips(); }
 
-        // 3. 云端同步逻辑
+        // 3. 云端同步与下拉框逻辑修复
         async function loadCheckInData() {
             try {
+                // 关键点：请求您部署在 Vercel 的 API
                 const res = await fetch('/api/checkin');
+                if (!res.ok) throw new Error("Fetch failed");
                 cloudData = await res.json();
 
-                // 更新用户列表
-                const users = Object.keys(cloudData);
-                userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>${u}</option>`).join('');
+                // 核心修复：更新并填充用户下拉列表
+                updateUserSelector();
 
-                renderCalendar(userSelector.value || loginUser);
-            } catch (e) { console.error("Cloud Sync Failed"); }
+                // 默认显示：如果有选中的用户则显示该用户，否则显示登录者，都没有则显示列表第一个人
+                const displayTarget = userSelector.value || loginUser || Object.keys(cloudData)[0];
+                if (displayTarget) {
+                    renderCalendar(displayTarget);
+                }
+            } catch (e) {
+                console.error("云端同步失败:", e);
+                // 如果失败，尝试渲染空日历
+                if (loginUser) renderCalendar(loginUser);
+            }
+        }
+
+        function updateUserSelector() {
+            const users = Object.keys(cloudData);
+            if (users.length === 0) {
+                userSelector.innerHTML = `<option value="">暂无伙伴</option>`;
+                return;
+            }
+
+            // 记住当前下拉框选中的人，防止刷新数据时跳转
+            const currentSelected = userSelector.value;
+
+            userSelector.innerHTML = users.map(u =>
+                `<option value="${u}" ${u === (currentSelected || loginUser) ? 'selected' : ''}>${u}</option>`
+            ).join('');
         }
 
         function renderCalendar(targetUser) {
@@ -400,61 +414,88 @@
             }
         }
 
+        // 4. 打卡与编辑逻辑
+        async function doCheckIn() {
+            // 调试日志：如果没反应，请按 F12 查看 Console
+            console.log("尝试同步，当前用户:", loginUser, "任务数:", currentTasks.length);
+
+            if (!loginUser) {
+                alert("身份尚未同步，请稍等或重新点击 Google 登录");
+                return;
+            }
+            if (currentTasks.length === 0) {
+                alert("请至少输入一条打卡内容（输入后按回车生成标签）");
+                return;
+            }
+
+            // 如果 editingDate 为空，则默认为今天
+            const dateKey = editingDate || `${year}-${month + 1}-${now.getDate()}`;
+
+            try {
+                const res = await fetch('/api/checkin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: loginUser,
+                        date: dateKey,
+                        text: currentTasks.join('\n')
+                    })
+                });
+
+                if (res.ok) {
+                    const toast = document.getElementById('success-toast');
+                    toast.classList.add('active');
+
+                    // 重置状态
+                    currentTasks = [];
+                    editingDate = null;
+                    renderChips();
+
+                    // 重新拉取云端最新数据
+                    await loadCheckInData();
+
+                    setTimeout(() => toast.classList.remove('active'), 3000);
+                } else {
+                    alert("同步失败，服务器返回错误");
+                }
+            } catch (e) {
+                alert("无法连接到同步服务器");
+            }
+        }
+
+        // 英雄弹窗
         function openHero(date, user, text) {
             editingDate = date;
             document.getElementById('modal-date').innerText = `DATE: ${date} // NODE: ${user}`;
             const items = text.split('\n');
             document.getElementById('modal-text-content').innerHTML = items.map(item => `
-                <div class="p-4 bg-black/5 dark:bg-white/5 rounded-2xl text-sm italic opacity-80 border-l-4 border-blue-500">“ ${item} ”</div>
-            `).join('');
+        <div class="p-4 bg-black/5 dark:bg-white/5 rounded-2xl text-sm italic opacity-80 border-l-4 border-blue-500">“ ${item} ”</div>
+    `).join('');
 
-            // 如果是本人，显示编辑按钮
             const editZone = document.getElementById('edit-zone');
             if (user === loginUser) {
                 editZone.classList.remove('hidden');
                 document.getElementById('edit-trigger-btn').onclick = () => {
-                    currentTasks = items;
+                    currentTasks = [...items]; // 载入旧内容到待提交列表
                     renderChips();
                     closeHero();
+                    // 平滑滚动到底部编辑区
                     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
                 };
             } else {
                 editZone.classList.add('hidden');
             }
-
             document.getElementById('hero-modal').classList.add('active');
         }
 
         function closeHero() { document.getElementById('hero-modal').classList.remove('active'); }
-
-        async function doCheckIn() {
-            if (!loginUser || currentTasks.length === 0) return;
-            const dateKey = editingDate || `${year}-${month + 1}-${now.getDate()}`;
-
-            const res = await fetch('/api/checkin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user: loginUser,
-                    date: dateKey,
-                    text: currentTasks.join('\n')
-                })
-            });
-
-            if (res.ok) {
-                const toast = document.getElementById('success-toast');
-                toast.classList.add('active');
-                currentTasks = [];
-                editingDate = null;
-                renderChips();
-                await loadCheckInData();
-                setTimeout(() => toast.classList.remove('active'), 3000);
-            }
-        }
-
         function switchUserView() { renderCalendar(userSelector.value); }
 
-        loadCheckInData();
+        function signOut() {
+            google.accounts.id.disableAutoSelect();
+            localStorage.removeItem('is_logged_in');
+            location.reload();
+        }
     </script>
 </body>
 
