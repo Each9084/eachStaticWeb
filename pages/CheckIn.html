@@ -30,7 +30,7 @@
         }
 
         body {
-            font-family: -apple-system, "SF Pro SC", sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: all 0.5s ease;
@@ -68,13 +68,14 @@
             background: rgba(0, 113, 227, 0.05);
         }
 
-        /* 麦穗背景奖励 */
+        /* 麦穗背景奖励 SVG */
         .laurel-wreath {
             position: absolute;
-            inset: 0;
+            width: 80%;
+            height: 80%;
             opacity: 0.15;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2310b981' d='M50 85c-15 0-25-10-25-25 0-5 2-10 5-14l2-3 4 8c-2 3-3 6-3 9 0 10 7 17 17 17s17-7 17-17c0-3-1-6-3-9l4-8 2 3c3 4 5 9 5 14 0 15-10 25-25 25z'/%3E%3Cpath fill='%2310b981' d='M30 40c-2-4-5-7-8-10l3-2c3 3 6 6 8 11l-3 1zM70 40l-3-1c2-5 5-8 8-11l3 2c-3 3-6 6-8 10z'/%3E%3C/svg%3E");
-            background-size: 80%;
+            background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
             pointer-events: none;
@@ -84,7 +85,7 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         /* 2. 英雄动画弹窗 */
@@ -146,16 +147,7 @@
             color: white;
         }
 
-        .task-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px;
-            border-radius: 14px;
-            transition: background 0.2s;
-        }
-
-        /* 6. 警告条幅 */
+        /* 6. 警告条幅动画 */
         #conflict-banner {
             height: 0;
             overflow: hidden;
@@ -167,71 +159,88 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px 8px 0 0;
+            border-radius: 12px 12px 0 0;
             transition: height 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         #conflict-banner.active {
-            height: 28px;
+            height: 32px;
         }
 
         .input-date-tag {
             position: absolute;
-            top: 12px;
-            right: 20px;
+            top: 15px;
+            right: 25px;
             font-family: monospace;
             font-size: 10px;
             background: var(--accent-blue);
             color: white;
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: 5px;
             font-weight: bold;
         }
 
-        /* 下拉框美化 */
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230071e3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 12px;
-            padding-right: 32px !important;
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(circle, var(--text-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.03;
+            z-index: -1;
+        }
+
+        #success-toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 20px;
+            z-index: 3000;
+            transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        #success-toast.active {
+            bottom: 40px;
         }
     </style>
 </head>
 
 <body class="antialiased">
+    <div class="grid-bg"></div>
     <script src="../components/navbar.js"></script>
 
     <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-        data-callback="handleSignIn" data-auto_select="true" data-itp_support="true"></div>
+        data-callback="handleSignIn" data-auto_select="true" data-itp_support="true">
+    </div>
 
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
         <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
                 <div class="flex items-center gap-4 mb-2">
                     <h1 class="text-4xl font-black tracking-tight" style="font-family: 'Noto Sans SC'">打卡实验室</h1>
-                    <div class="relative">
-                        <select id="user-selector" onchange="switchUserView()"
-                            class="bg-blue-600/10 text-blue-600 text-[11px] font-black px-6 py-2 rounded-full border-none outline-none cursor-pointer uppercase tracking-widest transition-all hover:bg-blue-600/20">
-                        </select>
-                    </div>
+                    <select id="user-selector" onchange="switchUserView()"
+                        class="bg-blue-600/10 text-blue-600 text-[11px] font-black px-4 py-2 rounded-full border-none outline-none cursor-pointer uppercase tracking-widest hover:bg-blue-600/20 transition-all">
+                    </select>
                 </div>
                 <p class="text-gray-400 font-mono text-[10px] tracking-[0.2em]">CLOUD NODE: VERCEL-KV // DATA SYNCING
                 </p>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
                 <input type="month" id="month-picker" onchange="changeMonth()"
-                    class="bg-transparent font-mono font-black text-blue-600 outline-none cursor-pointer">
+                    class="bg-transparent font-black text-blue-600 text-xl outline-none cursor-pointer mb-1">
+                <div id="current-month-display" class="text-xs font-mono opacity-30">2025.12</div>
             </div>
         </header>
 
         <div class="calendar-grid" id="calendar"></div>
 
         <div class="relative mt-12">
-            <div id="conflict-banner">⚠️ 该日期已有内容，请在卡片内编辑</div>
+            <div id="conflict-banner">⚠️ 该日期已有文稿，请点击卡片进入编辑模式</div>
             <div id="input-zone"
-                class="p-10 rounded-b-[3.5rem] rounded-t-lg bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5 opacity-50 pointer-events-none transition-all relative">
+                class="p-10 rounded-b-[3.5rem] rounded-t-xl bg-white/40 dark:bg-zinc-900/40 backdrop-blur border border-black/5 dark:border-white/5 opacity-50 pointer-events-none transition-all relative">
                 <div id="active-date-tag" class="input-date-tag">2025-12-29</div>
                 <h3 id="input-header" class="font-bold mb-6 flex items-center gap-3">
                     <i class="fas fa-fingerprint text-blue-500"></i> 等待身份验证...
@@ -240,7 +249,7 @@
                 <div id="task-preview-area" class="flex flex-wrap mb-6"></div>
 
                 <textarea id="task-input" rows="1"
-                    class="w-full bg-transparent border-none p-0 text-xl font-medium focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 resize-none"
+                    class="w-full bg-transparent border-none p-0 text-xl font-medium focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 resize-none overflow-hidden"
                     placeholder="键入今日文稿条目, Enter 分离..."></textarea>
 
                 <div class="mt-10 flex justify-between items-center">
@@ -261,18 +270,18 @@
             <div id="modal-date"
                 class="text-[10px] font-mono text-blue-600 tracking-widest uppercase mb-4 opacity-50 text-center"></div>
             <div id="modal-text-content" class="space-y-3 mb-10"></div>
-            <div class="flex gap-3">
+            <div id="edit-zone" class="hidden flex gap-2 mb-4">
                 <button id="edit-trigger-btn"
-                    class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition">进入编辑模式</button>
-                <button onclick="closeHero()"
-                    class="px-6 py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-40">关闭</button>
+                    class="flex-1 py-4 bg-blue-600/10 text-blue-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition">进入编辑模式</button>
             </div>
+            <button onclick="closeHero()"
+                class="w-full py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-40">返回核心视图</button>
         </div>
     </div>
 
     <div id="name-modal"
-        class="hidden fixed inset-0 z-[3000] bg-black/60 backdrop-blur flex items-center justify-center">
-        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm mx-4">
+        class="hidden fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm">
             <h2 class="text-2xl font-black mb-6">新身份识别</h2>
             <input id="nickname-input" type="text"
                 class="w-full bg-zinc-100 dark:bg-zinc-800 p-5 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500 text-center font-bold"
@@ -282,137 +291,62 @@
         </div>
     </div>
 
-    <div id="success-toast"
-        class="fixed bottom-[-100px] left-1/2 -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-2xl font-bold transition-all z-[4000]">
-        同步成功</div>
+    <div id="success-toast">
+        <span class="text-xs font-black uppercase tracking-widest"><i class="fas fa-check-circle mr-2"></i> 同步成功 /
+            数据已持久化</span>
+    </div>
 
     <script>
+        const calendarEl = document.getElementById('calendar');
+        const userSelector = document.getElementById('user-selector');
+        const taskInput = document.getElementById('task-input');
+        const previewArea = document.getElementById('task-preview-area');
+        const conflictBanner = document.getElementById('conflict-banner');
+        const dateTag = document.getElementById('active-date-tag');
+        const monthPicker = document.getElementById('month-picker');
+
         let now = new Date();
         let currentYear = now.getFullYear();
         let currentMonth = now.getMonth();
         let targetEditDate = `${currentYear}-${currentMonth + 1}-${now.getDate()}`;
-        let cloudData = {};
+        let currentTasks = [];
         let loginUser = null;
         let googleSub = null;
-        let currentTasks = [];
+        let cloudData = {};
+        let editingDate = null;
 
-        const calendarEl = document.getElementById('calendar');
-        const monthPicker = document.getElementById('month-picker');
-        const conflictBanner = document.getElementById('conflict-banner');
-        const dateTag = document.getElementById('active-date-tag');
+        // 初始化日期选择器
+        monthPicker.value = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+        function handleSignIn(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            googleSub = payload.sub;
+            const savedName = localStorage.getItem(`nickname_${googleSub}`);
+            if (savedName) initUserSession(savedName);
+            else document.getElementById('name-modal').classList.remove('hidden');
+        }
 
         window.onload = () => {
-            monthPicker.value = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-            dateTag.innerText = targetEditDate;
             loadCheckInData();
+            dateTag.innerText = targetEditDate;
         };
 
-        async function loadCheckInData() {
-            try {
-                const res = await fetch('/api/checkin');
-                cloudData = await res.json();
-                updateUserSelector();
-                renderCalendar();
-            } catch (e) { console.error("Data Load Error", e); }
-        }
-
-        function renderCalendar() {
-            calendarEl.innerHTML = '';
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const targetUser = document.getElementById('user-selector').value || loginUser;
-            const userData = cloudData[targetUser] || {};
-
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
-                const data = userData[dateKey];
-                const day = document.createElement('div');
-                day.className = `calendar-day ${dateKey === `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}` ? 'today' : ''}`;
-                day.innerHTML = `<span class="font-mono text-[10px] font-black opacity-30 absolute top-3 left-3">${i}</span>`;
-
-                if (data) {
-                    const tasks = JSON.parse(data);
-                    const doneCount = tasks.filter(t => t.status === 1).length;
-                    const failCount = tasks.filter(t => t.status === 2).length;
-
-                    // 状态点逻辑
-                    let color = '#d1d5db'; // 空白
-                    if (doneCount === tasks.length && tasks.length > 0) {
-                        color = '#10b981'; // 全成
-                        day.innerHTML += `<div class="laurel-wreath"></div>`;
-                    } else if (doneCount > 0) {
-                        color = '#f59e0b'; // 部分
-                    } else if (failCount > 0) {
-                        color = '#ef4444'; // 全败
-                    }
-                    day.innerHTML += `<div class="dot" style="background: ${color}"></div>`;
-                }
-
-                day.onclick = (e) => openHero(e, dateKey, data);
-                calendarEl.appendChild(day);
+        function confirmNickname() {
+            const val = document.getElementById('nickname-input').value.trim();
+            if (val) {
+                localStorage.setItem(`nickname_${googleSub}`, val);
+                initUserSession(val);
+                document.getElementById('name-modal').classList.add('hidden');
             }
         }
 
-        // 英雄动画弹窗逻辑
-        function openHero(e, date, rawData) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const modal = document.getElementById('hero-modal');
-            const content = document.getElementById('modal-content');
-
-            // 初始状态
-            content.style.transition = 'none';
-            content.style.transform = `translate(${rect.left - window.innerWidth / 2 + rect.width / 2}px, ${rect.top - window.innerHeight / 2 + rect.height / 2}px) scale(0.1)`;
-
-            modal.classList.add('active');
-            setTimeout(() => {
-                content.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                content.style.transform = 'translate(0, 0) scale(1)';
-            }, 10);
-
-            // 渲染内容
-            document.getElementById('modal-date').innerText = `SESSION: ${date}`;
-            const tasks = rawData ? JSON.parse(rawData) : [];
-            const container = document.getElementById('modal-text-content');
-
-            if (tasks.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 italic py-10">当日无计划条目</p>`;
-            } else {
-                container.innerHTML = tasks.map((t, idx) => `
-                    <div class="task-item group">
-                        <div class="status-box ${t.status === 1 ? 'status-done' : (t.status === 2 ? 'status-fail' : '')}" 
-                             onclick="toggleItemStatus(${idx}, '${date}')">
-                            ${t.status === 1 ? '<i class="fas fa-check"></i>' : (t.status === 2 ? '<i class="fas fa-times"></i>' : '')}
-                        </div>
-                        <span class="text-sm font-bold opacity-80">${t.text}</span>
-                    </div>
-                `).join('');
-            }
-
-            // 编辑按钮逻辑
-            document.getElementById('edit-trigger-btn').onclick = () => {
-                setTargetDate(date);
-                if (rawData) currentTasks = JSON.parse(rawData);
-                renderChips();
-                closeHero();
-                document.getElementById('task-input').focus();
-            };
+        function initUserSession(name) {
+            loginUser = name;
+            document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 识别成功: <span class="text-blue-600">👤 ${name}</span>`;
+            loadCheckInData();
         }
 
-        function setTargetDate(date) {
-            targetEditDate = date;
-            dateTag.innerText = date;
-
-            // 检查冲突
-            const userData = cloudData[loginUser] || {};
-            if (userData[date]) conflictBanner.classList.add('active');
-            else conflictBanner.classList.remove('active');
-        }
-
-        function closeHero() {
-            document.getElementById('hero-modal').classList.remove('active');
-        }
-
-        // 输入逻辑
-        const taskInput = document.getElementById('task-input');
         taskInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -427,16 +361,143 @@
         });
 
         function renderChips() {
-            const area = document.getElementById('task-preview-area');
-            area.innerHTML = currentTasks.map((t, i) => `
-                <div class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold m-1 animate-reveal">
-                    <span onclick="toggleCurrentStatus(${i})" class="cursor-pointer">
-                        ${t.status === 1 ? '✅' : (t.status === 2 ? '❌' : '⚪')}
+            previewArea.innerHTML = currentTasks.map((task, i) => `
+                <div class="task-chip bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold m-1 flex items-center gap-2">
+                    <span onclick="toggleTaskStatus(${i})" class="cursor-pointer text-[14px]">
+                        ${task.status === 1 ? '✅' : (task.status === 2 ? '❌' : '⚪')}
                     </span>
-                    ${t.text}
-                    <i class="fas fa-times opacity-50 hover:opacity-100 cursor-pointer" onclick="removeChip(${i})"></i>
+                    <span>${task.text}</span>
+                    <i class="fas fa-times opacity-30 cursor-pointer ml-1" onclick="removeChip(${i})"></i>
                 </div>
             `).join('');
+        }
+
+        function toggleTaskStatus(i) { currentTasks[i].status = (currentTasks[i].status + 1) % 3; renderChips(); }
+        function removeChip(i) { currentTasks.splice(i, 1); renderChips(); }
+
+        async function loadCheckInData() {
+            try {
+                const res = await fetch('/api/checkin');
+                cloudData = await res.json();
+                updateUserSelector();
+                renderCalendar(userSelector.value || loginUser);
+            } catch (e) { console.error(e); }
+        }
+
+        function updateUserSelector() {
+            const users = Object.keys(cloudData);
+            userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>👤 ${u}</option>`).join('');
+        }
+
+        function renderCalendar(targetUser) {
+            calendarEl.innerHTML = '';
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const userData = cloudData[targetUser] || {};
+            const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
+                const rawData = userData[dateKey];
+                const day = document.createElement('div');
+                day.className = `calendar-day ${dateKey === todayStr ? 'today' : ''}`;
+                day.innerHTML = `<span class="font-mono text-xs font-black opacity-20 absolute top-2 left-3">${i}</span>`;
+
+                if (rawData) {
+                    let items = JSON.parse(rawData);
+                    const done = items.filter(it => it.status === 1).length;
+                    const fail = items.filter(it => it.status === 2).length;
+
+                    if (done === items.length && items.length > 0) {
+                        day.innerHTML += `<div class="laurel-wreath"></div>`;
+                        day.innerHTML += `<div class="dot bg-green-500"></div>`;
+                    } else if (done > 0) {
+                        day.innerHTML += `<div class="dot bg-yellow-500"></div>`;
+                    } else if (fail > 0) {
+                        day.innerHTML += `<div class="dot bg-red-500"></div>`;
+                    }
+                }
+                day.onclick = (e) => openHero(e, dateKey, targetUser, rawData);
+                calendarEl.appendChild(day);
+            }
+        }
+
+        function openHero(event, date, user, rawData) {
+            const modal = document.getElementById('hero-modal');
+            const content = document.getElementById('modal-content');
+            const rect = event.currentTarget.getBoundingClientRect();
+
+            // 线性移动动画逻辑
+            content.style.transition = 'none';
+            content.style.transform = `translate(${rect.left - window.innerWidth / 2 + rect.width / 2}px, ${rect.top - window.innerHeight / 2 + rect.height / 2}px) scale(0.1)`;
+
+            modal.classList.add('active');
+            setTimeout(() => {
+                content.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                content.style.transform = `translate(0, 0) scale(1)`;
+            }, 10);
+
+            document.getElementById('modal-date').innerText = `DATE: ${date} // USER: ${user}`;
+            const container = document.getElementById('modal-text-content');
+
+            if (!rawData) {
+                container.innerHTML = `<div class="py-10 text-center opacity-30 text-xs italic">当日无文稿，点击编辑开启计划</div>`;
+            } else {
+                let items = JSON.parse(rawData);
+                container.innerHTML = items.map((item, idx) => `
+                    <div class="task-item flex items-center gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                        <div class="status-box ${item.status === 1 ? 'status-done' : (item.status === 2 ? 'status-fail' : '')}" 
+                             onclick="updateItemStatusInModal('${date}', ${idx})">
+                            ${item.status === 1 ? '<i class="fas fa-check"></i>' : (item.status === 2 ? '<i class="fas fa-times"></i>' : '')}
+                        </div>
+                        <span class="text-sm font-medium ${item.status === 2 ? 'line-through opacity-40' : ''}">${item.text}</span>
+                    </div>
+                `).join('');
+            }
+
+            const editZone = document.getElementById('edit-zone');
+            editZone.classList.remove('hidden');
+            document.getElementById('edit-trigger-btn').onclick = () => {
+                setTargetDate(date, rawData);
+                closeHero();
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            };
+        }
+
+        function setTargetDate(date, rawData) {
+            targetEditDate = date;
+            dateTag.innerText = date;
+            editingDate = date;
+
+            if (rawData) {
+                currentTasks = JSON.parse(rawData);
+                conflictBanner.classList.add('active');
+            } else {
+                currentTasks = [];
+                conflictBanner.classList.remove('active');
+            }
+            renderChips();
+            taskInput.focus();
+        }
+
+        async function updateItemStatusInModal(date, idx) {
+            if (userSelector.value !== loginUser) return;
+            let userData = cloudData[loginUser] || {};
+            let items = JSON.parse(userData[date]);
+            items[idx].status = (items[idx].status + 1) % 3;
+
+            const res = await fetch('/api/checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: loginUser, date: date, text: JSON.stringify(items) })
+            });
+            if (res.ok) {
+                loadCheckInData();
+                // 局部更新预览
+                setTimeout(() => {
+                    const freshData = cloudData[loginUser][date];
+                    openHero({ currentTarget: document.querySelector('.today') }, date, loginUser, freshData);
+                }, 100);
+            }
         }
 
         async function doCheckIn() {
@@ -446,65 +507,29 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user: loginUser, date: targetEditDate, text: JSON.stringify(currentTasks) })
             });
-            if (res.ok) {
-                showToast();
-                currentTasks = [];
-                renderChips();
-                loadCheckInData();
-            }
-        }
 
-        function showToast() {
-            const t = document.getElementById('success-toast');
-            t.style.bottom = '40px';
-            setTimeout(() => t.style.bottom = '-100px', 3000);
+            if (res.ok) {
+                const toast = document.getElementById('success-toast');
+                toast.classList.add('active');
+                currentTasks = [];
+                editingDate = null;
+                renderChips();
+                conflictBanner.classList.remove('active');
+                await loadCheckInData();
+                setTimeout(() => toast.classList.remove('active'), 3000);
+            }
         }
 
         function changeMonth() {
             const [y, m] = monthPicker.value.split('-');
             currentYear = parseInt(y);
             currentMonth = parseInt(m) - 1;
-            renderCalendar();
+            document.getElementById('current-month-display').innerText = `${currentYear}.${currentMonth + 1}`;
+            renderCalendar(userSelector.value || loginUser);
         }
 
-        function updateUserSelector() {
-            const selector = document.getElementById('user-selector');
-            const users = Object.keys(cloudData);
-            selector.innerHTML = users.map(u => `<option value="${u}">👤 ${u}</option>`).join('');
-            if (loginUser && !users.includes(loginUser)) {
-                selector.innerHTML += `<option value="${loginUser}" selected>👤 ${loginUser}</option>`;
-            }
-        }
-
-        // 基础功能保持原有逻辑
-        function handleSignIn(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            googleSub = payload.sub;
-            const savedName = localStorage.getItem(`nickname_${googleSub}`);
-            if (savedName) initUser(savedName);
-            else document.getElementById('name-modal').classList.remove('hidden');
-        }
-
-        function confirmNickname() {
-            const val = document.getElementById('nickname-input').value.trim();
-            if (val) {
-                localStorage.setItem(`nickname_${googleSub}`, val);
-                initUser(val);
-                document.getElementById('name-modal').classList.add('hidden');
-            }
-        }
-
-        function initUser(name) {
-            loginUser = name;
-            document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
-            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 已识别: ${name}`;
-            updateUserSelector();
-            setTargetDate(`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`);
-        }
-
-        function toggleCurrentStatus(i) { currentTasks[i].status = (currentTasks[i].status + 1) % 3; renderChips(); }
-        function removeChip(i) { currentTasks.splice(i, 1); renderChips(); }
-        function switchUserView() { renderCalendar(); }
+        function closeHero() { document.getElementById('hero-modal').classList.remove('active'); }
+        function switchUserView() { renderCalendar(userSelector.value); }
     </script>
 </body>
 
