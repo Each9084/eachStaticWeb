@@ -8,9 +8,19 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
-        if (req.method === 'GET') {
+        /* if (req.method === 'GET') {
             const data = await kv.get('checkin_data');
             return res.status(200).json(data || {});
+        } */
+
+        // 在 GET 逻辑里临时加入
+        if (req.method === 'GET') {
+            let data = await kv.get('checkin_data') || {};
+            if (data["TESTBOT"]) {
+                delete data["TESTBOT"]; // 删除这个用户
+                await kv.set('checkin_data', data); // 写回数据库
+            }
+            return res.status(200).json(data);
         }
 
         if (req.method === 'POST') {
