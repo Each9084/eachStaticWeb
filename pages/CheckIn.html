@@ -403,25 +403,37 @@
                 day.className = `calendar-day ${isToday ? 'today' : ''}`;
                 day.innerHTML = `<span class="font-mono text-xs font-black opacity-20 z-10">${i}</span>`;
 
+                // 在 renderCalendar 函数内循环生成 day 的位置：
                 if (rawData) {
                     const items = JSON.parse(rawData);
                     const allDone = items.length > 0 && items.every(it => it.status === 1);
+                    const allFail = items.length > 0 && items.every(it => it.status === 2);
                     const anyDone = items.some(it => it.status === 1);
-                    const allFail = items.length > 0 && items.every(it => it.status === 2); //全是fail
+                    const anyFail = items.some(it => it.status === 2);
+                    const anyPending = items.some(it => it.status === 0);
 
-                    //if (allDone) day.innerHTML += `<div class="wreath-bg"></div>`;
-                    // 如果全成，除了麦穗背景，还添加特殊的 CSS 类
+                    // 1. 处理背景特效类名
                     if (allDone) {
                         day.classList.add('all-done-special');
                         day.innerHTML += `<div class="wreath-bg"></div>`;
                     } else if (allFail) {
-                        day.classList.add('all-fail-special'); // 应用全未完成特效
+                        day.classList.add('all-fail-special'); // 应用你刚才要求的全未完成特效
                     }
 
+                    // 2. 修复点颜色逻辑
                     const dot = document.createElement('div');
                     dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
-                    // 保持原来的点颜色逻辑，全失败显示红色
-                    dot.style.background = allDone ? '#10b981' : (allFail ? '#ef4444' : (anyDone ? '#f59e0b' : '#10b981'));
+
+                    let dotColor = '#d1d5db'; // 默认灰色 (只有待办时)
+                    if (allDone) {
+                        dotColor = '#10b981'; // 全对：绿色
+                    } else if (allFail) {
+                        dotColor = '#ef4444'; // 全叉：红色
+                    } else if (anyDone || (anyFail && anyPending)) {
+                        dotColor = '#f59e0b'; // 混合状态（有勾，或有叉有待办）：橙色
+                    }
+
+                    dot.style.background = dotColor;
                     day.appendChild(dot);
 
                     day.onclick = (e) => openHero(e, dateKey, targetUser, rawData);
