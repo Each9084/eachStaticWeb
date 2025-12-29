@@ -36,12 +36,6 @@
             transition: all 0.5s ease;
         }
 
-        /* 哥特字体 Logo 修复 */
-        .gothic-logo {
-            font-family: 'UnifrakturMaguntia', serif !important;
-            font-size: 1.5rem;
-        }
-
         /* 增强的日历格子 */
         .calendar-grid {
             display: grid;
@@ -194,21 +188,7 @@
 <body class="antialiased">
     <div class="grid-bg"></div>
 
-    <nav class="fixed top-0 w-full z-50 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
-        <div class="max-w-6xl mx-auto px-8 h-16 flex items-center justify-between">
-            <a href="../index.html" class="flex items-center group">
-                <span class="gothic-logo text-[#1d1d1f] dark:text-white font-semibold">
-                    <span class="text-[#0071e3]">Each</span> Web
-                </span>
-            </a>
-            <div class="flex items-center gap-6">
-                <div id="g_id_onload"
-                    data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-                    data-callback="handleSignIn" data-auto_select="true"></div>
-                <div class="g_id_signin" data-type="icon" data-shape="circle"></div>
-            </div>
-        </div>
-    </nav>
+    <script src="../components/navbar.js"></script>
 
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
         <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -216,14 +196,23 @@
                 <div class="flex items-center gap-4 mb-2">
                     <h1 class="text-4xl font-black tracking-tight" style="font-family: 'Noto Sans SC'">打卡实验室</h1>
                     <select id="user-selector" onchange="switchUserView()"
-                        class="bg-blue-600/10 text-blue-600 text-[10px] font-black px-4 py-1.5 rounded-full outline-none cursor-pointer uppercase">
+                        class="bg-blue-600/10 text-blue-600 text-[10px] font-black px-4 py-1.5 rounded-full outline-none cursor-pointer uppercase tracking-widest">
                     </select>
                 </div>
                 <p class="text-gray-400 font-mono text-[10px] tracking-[0.2em]">CLOUD NODE: VERCEL-KV // DATA SYNCING
                 </p>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end gap-3">
+                <div class="flex items-center gap-4">
+                    <span id="auth-status-text"
+                        class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tighter">Identity: Not
+                        Verified</span>
+                    <div id="g_id_onload"
+                        data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
+                        data-callback="handleSignIn" data-auto_select="true"></div>
+                    <div class="g_id_signin" data-type="icon" data-shape="circle" data-theme="outline"></div>
+                </div>
                 <input type="month" id="month-picker" onchange="changeMonth()"
                     class="bg-blue-600/5 text-blue-600 font-mono font-black px-4 py-2 rounded-xl border-none outline-none cursor-pointer">
             </div>
@@ -294,6 +283,7 @@
         const taskInput = document.getElementById('task-input');
         const monthPicker = document.getElementById('month-picker');
         const conflictBanner = document.getElementById('conflict-banner');
+        const authStatusText = document.getElementById('auth-status-text');
 
         let now = new Date();
         let currentYear = now.getFullYear();
@@ -318,7 +308,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // 动态显示当月所有天数
         function renderCalendar() {
             calendarEl.innerHTML = '';
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -422,6 +411,7 @@
         }
 
         function handleSignIn(response) {
+            authStatusText.innerText = "Status: Authenticating...";
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
             googleSub = payload.sub;
             const savedName = localStorage.getItem(`nickname_${googleSub}`);
@@ -440,8 +430,10 @@
 
         function initUserSession(name) {
             loginUser = name;
+            authStatusText.innerText = `Verified: ${name}`;
+            authStatusText.classList.replace('text-gray-400', 'text-green-500');
             document.getElementById('input-zone').classList.remove('opacity-50', 'pointer-events-none');
-            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 授权成功: ${name}`;
+            document.getElementById('input-header').innerHTML = `<i class="fas fa-unlock text-blue-500 mr-2"></i> 已识别身份: ${name}`;
             document.getElementById('editing-date-display').innerText = `TARGET: ${editingDate}`;
             loadCheckInData();
         }
