@@ -548,11 +548,17 @@
             const commentContainer = document.getElementById('modal-comments-list');
             if (dayObj.comments && dayObj.comments.length > 0) {
                 commentContainer.innerHTML = dayObj.comments.map(c => `
-                    <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl">
-                        <div class="flex justify-between mb-1"><span class="text-[9px] font-black text-blue-600 tracking-tighter uppercase">${c.user}</span><span class="text-[8px] opacity-40 font-mono">${c.time}</span></div>
-                        <p class="text-[11px] font-medium leading-relaxed">${c.content}</p>
-                    </div>
-                `).join('');
+        <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl group relative">
+            <div class="flex justify-between mb-1">
+                <span class="text-[9px] font-black text-blue-600 uppercase">${c.user}</span>
+                <span class="text-[8px] opacity-40 font-mono">${c.time}</span>
+            </div>
+            <p class="text-[11px] font-medium leading-relaxed">${c.content}</p>
+            ${c.user === loginUser ? `
+                <button onclick="deleteComment('${c.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[8px] text-red-500 transition">删除</button>
+            ` : ''}
+        </div>
+    `).join('');
             } else {
                 commentContainer.innerHTML = `<p class="text-[10px] text-gray-400 italic text-center py-4">暂无评论</p>`;
             }
@@ -572,10 +578,11 @@
         async function submitComment() {
             const input = document.getElementById('comment-input');
             const content = input.value.trim();
-            if (!loginUser || !content) return;
+            const targetUser = userSelector.value; // 获取当前下拉框选中的人
+            if (!loginUser || !content || !targetUser) return;
 
             const commentData = {
-                user: loginUser,
+                user: loginUser, // 评论者
                 content: content,
                 time: new Date().toLocaleString('zh-CN', { hour12: false }).slice(5, -3)
             };
@@ -584,7 +591,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user: userSelector.value || loginUser,
+                    user: targetUser, // 目标：发给谁
                     date: editingDate,
                     text: JSON.stringify(commentData),
                     type: 'add_comment'
@@ -594,9 +601,9 @@
             if (res.ok) {
                 input.value = '';
                 await loadCheckInData();
-                // 刷新弹窗
-                const freshData = cloudData[userSelector.value || loginUser][editingDate];
-                openHero(null, editingDate, userSelector.value || loginUser, freshData);
+                // 实时局部刷新弹窗内容
+                const freshData = cloudData[targetUser][editingDate];
+                openHero(null, editingDate, targetUser, freshData);
             }
         }
 
