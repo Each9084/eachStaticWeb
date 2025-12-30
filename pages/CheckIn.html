@@ -427,6 +427,44 @@
             } catch (e) { console.error("加载数据失败:", e); }
         }
 
+        // 核心修复：深度递归解析数据，防止嵌套陷阱
+        function parseDayData(rawData) {
+            let result = { tasks: [], comments: [] };
+            if (!rawData) return result;
+
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+
+                // 递归“脱壳”：如果发现 tasks 属性里还嵌套着 tasks，就继续往里找
+                const unwrap = (obj) => {
+                    if (obj && obj.tasks && !Array.isArray(obj.tasks)) {
+                        // 如果存在嵌套评论，进行合并
+                        if (obj.comments) result.comments = result.comments.concat(obj.comments);
+                        return unwrap(obj.tasks);
+                    }
+                    return obj;
+                };
+
+                let finalObj = unwrap(data);
+
+                if (Array.isArray(finalObj)) {
+                    result.tasks = finalObj;
+                } else if (finalObj && finalObj.tasks) {
+                    result.tasks = Array.isArray(finalObj.tasks) ? finalObj.tasks : [];
+                    if (finalObj.comments) result.comments = result.comments.concat(finalObj.comments);
+                }
+
+                // 过滤重复评论（根据ID或内容+时间）
+                const seen = new Set();
+                result.comments = result.comments.filter(c => {
+                    const key = c.id || `${c.user}-${c.content}-${c.time}`;
+                    return seen.has(key) ? false : seen.add(key);
+                });
+
+            } catch (e) { console.error("解析错误:", e); }
+            return result;
+        }
+
         function renderCalendar() {
             calendarEl.innerHTML = '';
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -443,22 +481,19 @@
                 day.innerHTML = `<span class="font-mono text-xs font-black opacity-20 z-10">${i}</span>`;
 
                 if (rawData) {
-                    let dayObj = { tasks: [], comments: [] };
-                    try {
-                        const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                        dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
-                    } catch (e) { console.error("解析错误:", e); }
+                    const dayObj = parseDayData(rawData);
 
-                    // 评论海浪
                     if (dayObj.comments && dayObj.comments.length > 0) {
                         day.classList.add('has-comments');
-                        const waveContainer = document.createElement('div');
-                        waveContainer.className = 'wave-container';
-                        waveContainer.innerHTML = `<div class="wave"></div><div class="wave wave-secondary"></div>`;
-                        day.appendChild(waveContainer);
+                        if (!day.querySelector('.wave-container')) {
+                            const waveContainer = document.createElement('div');
+                            waveContainer.className = 'wave-container';
+                            waveContainer.innerHTML = `<div class="wave"></div><div class="wave wave-secondary"></div>`;
+                            day.appendChild(waveContainer);
+                        }
                     }
 
-                    const items = dayObj.tasks || [];
+                    const items = dayObj.tasks;
                     if (items.length > 0) {
                         const allDone = items.every(it => it.status === 1);
                         const allFail = items.every(it => it.status === 2);
@@ -499,7 +534,6 @@
             const modal = document.getElementById('hero-modal');
             modal.classList.add('active');
 
-            // 如果 event 为空，说明是评论后的刷新，不执行动画逻辑
             if (event && event.currentTarget) {
                 const content = document.getElementById('modal-content');
                 const rect = event.currentTarget.getBoundingClientRect();
@@ -513,11 +547,7 @@
 
             document.getElementById('modal-date').innerText = `${date} // ${user}`;
 
-            let dayObj = { tasks: [], comments: [] };
-            try {
-                const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
-            } catch (e) { }
+            const dayObj = parseDayData(rawData);
 
             // 渲染任务
             document.getElementById('modal-text-content').innerHTML = dayObj.tasks.map((t, idx) => `
@@ -539,8 +569,7 @@
                     body: JSON.stringify({ user: loginUser, date: d, text: JSON.stringify(dayObj.tasks) })
                 }).then(() => {
                     loadCheckInData().then(() => {
-                        const fresh = cloudData[u][d];
-                        openHero(null, d, u, fresh);
+                        openHero(null, d, u, cloudData[u][d]);
                     });
                 });
             };
@@ -549,7 +578,7 @@
             const commentContainer = document.getElementById('modal-comments-list');
             if (dayObj.comments && dayObj.comments.length > 0) {
                 commentContainer.innerHTML = dayObj.comments.map(c => `
-                <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl group relative">
+                <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl group relative mb-2">
                     <div class="flex justify-between mb-1">
                         <span class="text-[9px] font-black text-blue-600 uppercase">${c.user}</span>
                         <span class="text-[8px] opacity-40 font-mono">${c.time}</span>
@@ -583,7 +612,7 @@
             const commentData = {
                 user: loginUser,
                 content: content,
-                time: new Date().toLocaleString('zh-CN', { hour12: false }).slice(5, -3)
+                time: new Date().toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-')
             };
 
             const res = await fetch('/api/checkin', {
@@ -600,8 +629,7 @@
             if (res.ok) {
                 input.value = '';
                 await loadCheckInData();
-                const freshData = cloudData[targetUser][editingDate];
-                openHero(null, editingDate, targetUser, freshData);
+                openHero(null, editingDate, targetUser, cloudData[targetUser][editingDate]);
             }
         }
 
@@ -620,8 +648,7 @@
             });
             if (res.ok) {
                 await loadCheckInData();
-                const freshData = cloudData[targetUser][editingDate];
-                openHero(null, editingDate, targetUser, freshData);
+                openHero(null, editingDate, targetUser, cloudData[targetUser][editingDate]);
             }
         }
 
@@ -692,20 +719,14 @@
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                if (!cloudData[loginUser]) cloudData[loginUser] = {};
-                const existingComments = [];
-                try {
-                    const old = JSON.parse(cloudData[loginUser][editingDate]);
-                    if (old.comments) existingComments = old.comments;
-                } catch (e) { }
-                cloudData[loginUser][editingDate] = JSON.stringify({ tasks: currentTasks, comments: existingComments });
                 const st = document.getElementById('success-toast');
                 st.style.bottom = '40px';
                 currentTasks = [];
                 renderChips();
-                renderCalendar();
-                setTimeout(() => st.style.bottom = '-100px', 3000);
-                loadCheckInData();
+                loadCheckInData().then(() => {
+                    renderCalendar();
+                    setTimeout(() => st.style.bottom = '-100px', 3000);
+                });
             }
         }
 
