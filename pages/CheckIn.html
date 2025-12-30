@@ -424,15 +424,13 @@
                 cloudData = await res.json();
                 updateUserList();
                 renderCalendar();
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("加载数据失败:", e); }
         }
 
         function renderCalendar() {
             calendarEl.innerHTML = '';
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const targetUser = userSelector.value || loginUser;
-
-            // 确保从最新的数据源获取
             const userData = cloudData[targetUser] || {};
 
             for (let i = 1; i <= daysInMonth; i++) {
@@ -447,24 +445,17 @@
                 if (rawData) {
                     let dayObj = { tasks: [], comments: [] };
                     try {
-                        // 健壮性解析：处理 字符串、对象、数组 三种可能的历史遗留格式
                         const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                        if (parsed && parsed.tasks) {
-                            dayObj = parsed;
-                        } else if (Array.isArray(parsed)) {
-                            dayObj.tasks = parsed;
-                        }
-                    } catch (e) { console.error("Parse Error at date:", dateKey, e); }
+                        dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
+                    } catch (e) { console.error("解析错误:", e); }
 
-                    // --- 评论海浪逻辑 ---
+                    // 评论海浪
                     if (dayObj.comments && dayObj.comments.length > 0) {
                         day.classList.add('has-comments');
-                        if (!day.querySelector('.wave-container')) {
-                            const waveContainer = document.createElement('div');
-                            waveContainer.className = 'wave-container';
-                            waveContainer.innerHTML = `<div class="wave"></div><div class="wave wave-secondary"></div>`;
-                            day.appendChild(waveContainer);
-                        }
+                        const waveContainer = document.createElement('div');
+                        waveContainer.className = 'wave-container';
+                        waveContainer.innerHTML = `<div class="wave"></div><div class="wave wave-secondary"></div>`;
+                        day.appendChild(waveContainer);
                     }
 
                     const items = dayObj.tasks || [];
@@ -473,7 +464,6 @@
                         const allFail = items.every(it => it.status === 2);
                         const anyDone = items.some(it => it.status === 1);
                         const anyPending = items.some(it => it.status === 0);
-                        const anyFail = items.some(it => it.status === 2);
 
                         if (allDone) {
                             day.classList.add('all-done-special');
@@ -487,11 +477,10 @@
                         let dotColor = '#d1d5db';
                         if (allDone) dotColor = '#10b981';
                         else if (allFail) dotColor = '#ef4444';
-                        else if (anyDone || (anyFail && anyPending)) dotColor = '#f59e0b';
+                        else if (anyDone || (anyPending && items.some(it => it.status === 2))) dotColor = '#f59e0b';
                         dot.style.background = dotColor;
                         day.appendChild(dot);
                     }
-
                     day.onclick = (e) => openHero(e, dateKey, targetUser, rawData);
                 } else {
                     day.onclick = () => {
@@ -508,57 +497,67 @@
         function openHero(event, date, user, rawData) {
             editingDate = date;
             const modal = document.getElementById('hero-modal');
-            const content = document.getElementById('modal-content');
             modal.classList.add('active');
+
+            // 如果 event 为空，说明是评论后的刷新，不执行动画逻辑
+            if (event && event.currentTarget) {
+                const content = document.getElementById('modal-content');
+                const rect = event.currentTarget.getBoundingClientRect();
+                content.style.transition = 'none';
+                content.style.transform = `translate(${rect.left - window.innerWidth / 2 + rect.width / 2}px, ${rect.top - window.innerHeight / 2 + rect.height / 2}px) scale(0.1)`;
+                setTimeout(() => {
+                    content.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    content.style.transform = `translate(0, 0) scale(1)`;
+                }, 10);
+            }
 
             document.getElementById('modal-date').innerText = `${date} // ${user}`;
 
             let dayObj = { tasks: [], comments: [] };
             try {
-                const parsed = JSON.parse(rawData);
+                const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
             } catch (e) { }
 
-            const drawList = () => {
-                document.getElementById('modal-text-content').innerHTML = dayObj.tasks.map((t, idx) => `
-                    <div class="flex items-center gap-4 p-3 bg-black/5 rounded-xl">
-                        <div class="status-box ${t.status === 1 ? 'status-done' : (t.status === 2 ? 'status-fail' : '')}" 
-                             onclick="cycleStatus(${idx})">
-                            ${t.status === 1 ? '✓' : (t.status === 2 ? '×' : '')}
-                        </div>
-                        <span class="text-sm font-bold">${t.text}</span>
-                    </div>
-                `).join('');
-            };
+            // 渲染任务
+            document.getElementById('modal-text-content').innerHTML = dayObj.tasks.map((t, idx) => `
+            <div class="flex items-center gap-4 p-3 bg-black/5 rounded-xl">
+                <div class="status-box ${t.status === 1 ? 'status-done' : (t.status === 2 ? 'status-fail' : '')}" 
+                     onclick="cycleStatus(${idx}, '${date}', '${user}')">
+                    ${t.status === 1 ? '✓' : (t.status === 2 ? '×' : '')}
+                </div>
+                <span class="text-sm font-bold">${t.text}</span>
+            </div>
+        `).join('');
 
-            window.cycleStatus = (idx) => {
-                if (user !== loginUser) return;
+            window.cycleStatus = (idx, d, u) => {
+                if (u !== loginUser) return;
                 dayObj.tasks[idx].status = (dayObj.tasks[idx].status + 1) % 3;
-                drawList();
                 fetch('/api/checkin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user: loginUser, date: date, text: JSON.stringify(dayObj.tasks) })
-                }).then(() => loadCheckInData());
+                    body: JSON.stringify({ user: loginUser, date: d, text: JSON.stringify(dayObj.tasks) })
+                }).then(() => {
+                    loadCheckInData().then(() => {
+                        const fresh = cloudData[u][d];
+                        openHero(null, d, u, fresh);
+                    });
+                });
             };
 
-            drawList();
-
-            // 渲染评论列表
+            // 渲染评论
             const commentContainer = document.getElementById('modal-comments-list');
             if (dayObj.comments && dayObj.comments.length > 0) {
                 commentContainer.innerHTML = dayObj.comments.map(c => `
-        <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl group relative">
-            <div class="flex justify-between mb-1">
-                <span class="text-[9px] font-black text-blue-600 uppercase">${c.user}</span>
-                <span class="text-[8px] opacity-40 font-mono">${c.time}</span>
-            </div>
-            <p class="text-[11px] font-medium leading-relaxed">${c.content}</p>
-            ${c.user === loginUser ? `
-                <button onclick="deleteComment('${c.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[8px] text-red-500 transition">删除</button>
-            ` : ''}
-        </div>
-    `).join('');
+                <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl group relative">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-[9px] font-black text-blue-600 uppercase">${c.user}</span>
+                        <span class="text-[8px] opacity-40 font-mono">${c.time}</span>
+                    </div>
+                    <p class="text-[11px] font-medium leading-relaxed">${c.content}</p>
+                    ${c.user === loginUser ? `<button onclick="deleteComment('${c.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[8px] text-red-500 transition">删除</button>` : ''}
+                </div>
+            `).join('');
             } else {
                 commentContainer.innerHTML = `<p class="text-[10px] text-gray-400 italic text-center py-4">暂无评论</p>`;
             }
@@ -578,11 +577,11 @@
         async function submitComment() {
             const input = document.getElementById('comment-input');
             const content = input.value.trim();
-            const targetUser = userSelector.value; // 获取当前下拉框选中的人
+            const targetUser = userSelector.value || loginUser;
             if (!loginUser || !content || !targetUser) return;
 
             const commentData = {
-                user: loginUser, // 评论者
+                user: loginUser,
                 content: content,
                 time: new Date().toLocaleString('zh-CN', { hour12: false }).slice(5, -3)
             };
@@ -591,7 +590,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user: targetUser, // 目标：发给谁
+                    user: targetUser,
                     date: editingDate,
                     text: JSON.stringify(commentData),
                     type: 'add_comment'
@@ -601,7 +600,26 @@
             if (res.ok) {
                 input.value = '';
                 await loadCheckInData();
-                // 实时局部刷新弹窗内容
+                const freshData = cloudData[targetUser][editingDate];
+                openHero(null, editingDate, targetUser, freshData);
+            }
+        }
+
+        async function deleteComment(id) {
+            if (!confirm('确定删除这条评论吗？')) return;
+            const targetUser = userSelector.value || loginUser;
+            const res = await fetch('/api/checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: targetUser,
+                    date: editingDate,
+                    commentId: id,
+                    type: 'delete_comment'
+                })
+            });
+            if (res.ok) {
+                await loadCheckInData();
                 const freshData = cloudData[targetUser][editingDate];
                 openHero(null, editingDate, targetUser, freshData);
             }
@@ -655,56 +673,38 @@
 
         function renderChips() {
             document.getElementById('task-preview-area').innerHTML = currentTasks.map((t, i) => `
-                <div class="task-chip">
-                    <span onclick="toggleStatus(${i})" class="cursor-pointer">${t.status === 1 ? '✓' : (t.status === 2 ? '×' : '○')}</span>
-                    <span>${t.text}</span>
-                    <i class="fas fa-times opacity-30 cursor-pointer" onclick="currentTasks.splice(${i},1);renderChips();"></i>
-                </div>
-            `).join('');
+            <div class="task-chip">
+                <span onclick="toggleStatus(${i})" class="cursor-pointer">${t.status === 1 ? '✓' : (t.status === 2 ? '×' : '○')}</span>
+                <span>${t.text}</span>
+                <i class="fas fa-times opacity-30 cursor-pointer" onclick="currentTasks.splice(${i},1);renderChips();"></i>
+            </div>
+        `).join('');
         }
 
         window.toggleStatus = (i) => { currentTasks[i].status = (currentTasks[i].status + 1) % 3; renderChips(); };
 
         async function doCheckIn() {
             if (!loginUser || currentTasks.length === 0) return;
-
-            // 构造即将发送的数据
-            const payload = {
-                user: loginUser,
-                date: editingDate,
-                text: JSON.stringify(currentTasks)
-            };
-
+            const payload = { user: loginUser, date: editingDate, text: JSON.stringify(currentTasks) };
             const res = await fetch('/api/checkin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
             if (res.ok) {
-                // 关键点：立即手动更新本地 cloudData，无需等待重新加载
                 if (!cloudData[loginUser]) cloudData[loginUser] = {};
-
-                // 模拟 API 存储格式，确保本地缓存与远程一致
                 const existingComments = [];
                 try {
                     const old = JSON.parse(cloudData[loginUser][editingDate]);
                     if (old.comments) existingComments = old.comments;
                 } catch (e) { }
-
-                cloudData[loginUser][editingDate] = JSON.stringify({
-                    tasks: currentTasks,
-                    comments: existingComments
-                });
-
+                cloudData[loginUser][editingDate] = JSON.stringify({ tasks: currentTasks, comments: existingComments });
                 const st = document.getElementById('success-toast');
                 st.style.bottom = '40px';
                 currentTasks = [];
                 renderChips();
-                renderCalendar(); // 立即重新渲染
+                renderCalendar();
                 setTimeout(() => st.style.bottom = '-100px', 3000);
-
-                // 后台静默同步最新全量数据
                 loadCheckInData();
             }
         }
