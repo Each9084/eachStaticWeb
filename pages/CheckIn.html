@@ -234,48 +234,57 @@
             border-radius: 10px;
         }
 
-        /* 评论提示：底部曲线/波浪填充 */
-        .calendar-day.has-comments::after {
-            content: "";
-            position: absolute;
-            bottom: -15px;
-            /* 初始位置在底部以下 */
-            left: -50%;
-            width: 200%;
-            height: 35px;
-            background: rgba(0, 113, 227, 0.15);
-            /* 淡淡的蓝色填充 */
-            border-radius: 40%;
-            animation: wave-rise 5s infinite linear;
-            z-index: 1;
-            pointer-events: none;
-            transition: bottom 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
-
-        /* 评论提示：升起位置 */
+        /*评论部分*/
+        /* 海浪容器逻辑 */
         .calendar-day.has-comments {
             overflow: hidden;
-            /* 确保波浪不溢出卡片 */
         }
 
-        .calendar-day.has-comments:hover::after {
-            bottom: -10px;
-            /* 鼠标悬停时稍微升起 */
+        /* 矢量海浪层基础样式 */
+        .calendar-day.has-comments .wave-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 12px;
+            /* 控制海浪高度，不占据太多空间 */
+            background: transparent;
+            pointer-events: none;
+            z-index: 5;
         }
 
-        @keyframes wave-rise {
+        /* 矢量波浪 SVG 填充 */
+        .calendar-day.has-comments .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V0C48,35,98,69,142.63,80.66,203.4,96.53,259.46,67.92,321.39,56.44Z' fill='%230071e3' fill-opacity='0.2'/%3E%3C/svg%3E");
+            background-size: 50% 100%;
+            animation: wave-move 4s linear infinite;
+        }
+
+        /* 第二层波浪，形成错位感 */
+        .calendar-day.has-comments .wave-secondary {
+            background-position: 100px 0;
+            animation: wave-move 7s linear infinite reverse;
+            opacity: 0.15;
+        }
+
+        @keyframes wave-move {
             from {
-                transform: rotate(0deg);
+                transform: translateX(0);
             }
 
             to {
-                transform: rotate(360deg);
+                transform: translateX(-50%);
             }
         }
 
-        /* 深色模式适配 */
-        .dark-mode .calendar-day.has-comments::after {
-            background: rgba(0, 113, 227, 0.25);
+        /* 深色模式下海浪颜色微调 */
+        .dark-mode .calendar-day.has-comments .wave {
+            filter: brightness(1.2);
         }
     </style>
 </head>
@@ -443,7 +452,16 @@
                     // --- 新增逻辑：如果评论数大于 0，添加 has-comments 类 ---
                     if (dayObj.comments && dayObj.comments.length > 0) {
                         day.classList.add('has-comments');
+                        // 创建海浪容器并添加两个波浪层
+                        const waveContainer = document.createElement('div');
+                        waveContainer.className = 'wave-container';
+                        waveContainer.innerHTML = `
+            <div class="wave"></div>
+            <div class="wave wave-secondary"></div>
+        `;
+                        day.appendChild(waveContainer);
                     }
+
 
                     const items = dayObj.tasks;
                     const allDone = items.length > 0 && items.every(it => it.status === 1);
