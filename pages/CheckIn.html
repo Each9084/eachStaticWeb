@@ -635,20 +635,44 @@
 
         async function deleteComment(id) {
             if (!confirm('确定删除这条评论吗？')) return;
+
             const targetUser = userSelector.value || loginUser;
-            const res = await fetch('/api/checkin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user: targetUser,
-                    date: editingDate,
-                    commentId: id,
-                    type: 'delete_comment'
-                })
-            });
-            if (res.ok) {
-                await loadCheckInData();
-                openHero(null, editingDate, targetUser, cloudData[targetUser][editingDate]);
+
+            // --- 核心改进：即时响应 (UI First) ---
+            // 1. 获取本地缓存中的数据
+            let raw = cloudData[targetUser][editingDate];
+            let dayObj = parseDayData(raw);
+
+            // 2. 在本地数据中先行删除
+            dayObj.comments = dayObj.comments.filter(c => c.id !== id);
+
+            // 3. 立即更新本地缓存并刷新当前弹窗显示
+            cloudData[targetUser][editingDate] = JSON.stringify(dayObj);
+            openHero(null, editingDate, targetUser, cloudData[targetUser][editingDate]);
+
+            // 4. 同步更新日历图标 (如果评论删光了，海浪也要消失)
+            renderCalendar();
+
+            // 5. 最后异步发送请求到后端持久化
+            try {
+                const res = await fetch('/api/checkin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: targetUser,
+                        date: editingDate,
+                        commentId: id,
+                        type: 'delete_comment'
+                    })
+                });
+
+                if (res.ok) {
+                    // 静默拉取最新全量数据确保一致性
+                    await loadCheckInData();
+                }
+            } catch (e) {
+                console.error("删除同步失败:", e);
+                alert("网络异常，删除可能未同步至云端");
             }
         }
 
