@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <a href="${config.index}" data-page="index" class="nav-link hover:text-blue-600 transition">主页</a>
                 <a href="${config.about}" data-page="about" class="nav-link hover:text-blue-600 transition">关于</a>
                 <a href="${config.blog}"  data-page="blog"  class="nav-link hover:text-blue-600 transition">博客</a>
+                <a href="${config.blogSpace}"  data-page="blog"  class="nav-link hover:text-blue-600 transition">Space</a>
+                <a href="${config.publish}"  data-page="publish"  class="nav-link hover:text-blue-600 transition">Publish</a>
                 <a href="${config.editor}" data-page="editor"  class="nav-link hover:text-blue-600 transition">编辑器</a>
                 <a href="${config.check}" data-page="check"  class="nav-link hover:text-blue-600 transition">打卡</a>
                 <a href="https://github.com/Each9084" target="_blank" class="flex items-center hover:text-[#39d353] transition">
