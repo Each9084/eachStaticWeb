@@ -17,7 +17,9 @@ document.addEventListener("DOMContentLoaded", function () {
         blog: isSubPage ? './Blog.html' : './pages/Blog.html',
         // 在 pathConfig 里加入
         editor: isSubPage ? './mdEditor.html' : './pages/mdEditor.html',
-        check: isSubPage ? './CheckIn.html' : './pages/CheckIn.html'
+        check: isSubPage ? './CheckIn.html' : './pages/CheckIn.html',
+        blogSpace: isSubPage ? './BlogSpace.html' : './pages/BlogSpace.html',
+        publish: isSubPage ? './BlogPublish.html' : './pages/BlogPublish.html'
     };
 
     const navbarHTML = `

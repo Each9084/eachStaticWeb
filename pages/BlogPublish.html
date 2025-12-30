@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布文稿 | Each BlogSpace</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Inter:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f7;
+        }
+
+        .publish-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+
+        #vditor {
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <script src="../components/navbar.js"></script>
+
+    <main class="max-w-5xl mx-auto px-8 pt-28 pb-12">
+        <div class="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-sm mb-8 border border-black/5">
+            <input id="post-title" type="text" class="publish-input text-4xl font-black mb-6"
+                placeholder="输入令人惊叹的标题...">
+
+            <div class="flex flex-wrap gap-4 items-center border-t border-black/5 pt-6">
+                <div class="flex-1">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">文章分类标签
+                        (英文逗号分隔)</label>
+                    <input id="post-tags" type="text" class="publish-input text-sm font-bold text-blue-600"
+                        placeholder="e.g. Flutter, SQL, Life">
+                </div>
+                <div class="w-px h-10 bg-black/5"></div>
+                <button onclick="publishToCloud()"
+                    class="px-8 py-3 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition shadow-xl">
+                    <i class="fas fa-paper-plane mr-2"></i> 发布至 BlogSpace
+                </button>
+            </div>
+        </div>
+
+        <div id="vditor" class="min-h-[60vh]"></div>
+
+        <div id="g_id_onload" data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
+            data-callback="handleSignIn"></div>
+    </main>
+
+    <script>
+        let vditor;
+        let currentUser = null;
+
+        // 初始化编辑器
+        window.onload = () => {
+            vditor = new Vditor('vditor', {
+                height: 500,
+                cache: { enable: true, id: 'blogspace-editor' },
+                toolbarConfig: { pin: true },
+                placeholder: "开始书写你的思想..."
+            });
+        };
+
+        // 处理登录身份
+        function handleSignIn(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            const sub = payload.sub;
+            const nickname = localStorage.getItem(`nickname_${sub}`) || "匿名作者";
+            currentUser = { sub, nickname };
+            console.log("身份验证成功:", currentUser);
+        }
+
+        // 核心发布逻辑
+        async function publishToCloud() {
+            const title = document.getElementById('post-title').value.trim();
+            const tagsRaw = document.getElementById('post-tags').value;
+            const content = vditor.getValue();
+
+            if (!currentUser) { alert("请先通过导航栏登录"); return; }
+            if (!title || !content) { alert("标题和内容不能为空"); return; }
+
+            const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t !== "");
+
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sub: currentUser.sub,
+                    nickname: currentUser.nickname,
+                    title: title,
+                    content: content,
+                    tags: tags,
+                    summary: content.substring(0, 100).replace(/[#*`\n]/g, '') // 自动生成摘要
+                })
+            });
+
+            if (res.ok) {
+                alert("发布成功！");
+                window.location.href = "BlogSpace.html";
+            } else {
+                alert("发布失败，请检查后端配置");
+            }
+        }
+    </script>
+</body>
+
+</html>
