@@ -233,6 +233,50 @@
             background: rgba(0, 0, 0, 0.1);
             border-radius: 10px;
         }
+
+        /* 评论提示：底部曲线/波浪填充 */
+        .calendar-day.has-comments::after {
+            content: "";
+            position: absolute;
+            bottom: -15px;
+            /* 初始位置在底部以下 */
+            left: -50%;
+            width: 200%;
+            height: 35px;
+            background: rgba(0, 113, 227, 0.15);
+            /* 淡淡的蓝色填充 */
+            border-radius: 40%;
+            animation: wave-rise 5s infinite linear;
+            z-index: 1;
+            pointer-events: none;
+            transition: bottom 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        /* 评论提示：升起位置 */
+        .calendar-day.has-comments {
+            overflow: hidden;
+            /* 确保波浪不溢出卡片 */
+        }
+
+        .calendar-day.has-comments:hover::after {
+            bottom: -10px;
+            /* 鼠标悬停时稍微升起 */
+        }
+
+        @keyframes wave-rise {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 深色模式适配 */
+        .dark-mode .calendar-day.has-comments::after {
+            background: rgba(0, 113, 227, 0.25);
+        }
     </style>
 </head>
 
@@ -395,6 +439,11 @@
                         const parsed = JSON.parse(rawData);
                         dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
                     } catch (e) { }
+
+                    // --- 新增逻辑：如果评论数大于 0，添加 has-comments 类 ---
+                    if (dayObj.comments && dayObj.comments.length > 0) {
+                        day.classList.add('has-comments');
+                    }
 
                     const items = dayObj.tasks;
                     const allDone = items.length > 0 && items.every(it => it.status === 1);
