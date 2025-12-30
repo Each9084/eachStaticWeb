@@ -36,7 +36,6 @@
             transition: all 0.5s ease;
         }
 
-        /* 增强的日历格子 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -62,7 +61,6 @@
             background: rgba(255, 255, 255, 0.03);
         }
 
-        /* 麦穗背景奖励 */
         .wreath-bg {
             position: absolute;
             inset: 0;
@@ -86,7 +84,55 @@
             letter-spacing: 1px;
         }
 
-        /* 英雄动画弹窗 */
+        /* 背景特效 */
+        .calendar-day.all-done-special {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(16, 185, 129, 0.1) 100%) !important;
+            background-size: 200% 200% !important;
+            animation: shine-bg 3s linear infinite !important;
+            border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .calendar-day.all-fail-special {
+            background: rgba(239, 68, 68, 0.05) !important;
+            border: 1.5px solid rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .calendar-day.all-fail-special::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
+            animation: fail-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes shine-bg {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes fail-pulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
         #hero-modal {
             display: none;
             position: fixed;
@@ -111,30 +157,10 @@
             background: var(--bg-color);
             padding: 2.5rem;
             border-radius: 3rem;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
             transform-origin: center;
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* 冲突警告条幅 */
-        #conflict-banner {
-            height: 0;
-            overflow: hidden;
-            background: #ffde5b;
-            color: orange;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 900;
-            border-radius: 1rem 1rem 0 0;
-            transition: height 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
-
-        #conflict-banner.active {
-            height: 30px;
-            line-height: 30px;
-        }
-
-        /* 三态状态框 */
         .status-box {
             width: 22px;
             height: 22px;
@@ -145,7 +171,6 @@
             justify-content: center;
             font-size: 10px;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
         .status-done {
@@ -171,93 +196,48 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 10px rgba(0, 113, 227, 0.2);
         }
 
         .grid-bg {
             position: fixed;
             inset: 0;
+            z-index: -1;
+            opacity: 0.03;
             background-image: radial-gradient(circle, var(--text-color) 1px, transparent 1px);
             background-size: 40px 40px;
-            opacity: 0.03;
-            z-index: -1;
         }
 
-        /* 全成状态下的卡片背景特殊效果 */
-        .calendar-day.all-done-special {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(16, 185, 129, 0.1) 100%) !important;
-            background-size: 200% 200% !important;
-            animation: shine-bg 3s linear infinite !important;
-            border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
-        }
-
-        /* 渐变流动动画 */
-        @keyframes shine-bg {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        /* 深色模式下的全成效果微调 */
-        .dark-mode .calendar-day.all-done-special {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(28, 28, 30, 0.8) 50%, rgba(16, 185, 129, 0.2) 100%) !important;
-            background-size: 200% 200% !important;
-            border-color: rgba(16, 185, 129, 0.4) !important;
-        }
-
-
-        /* 全未完成状态下的特殊效果：静谧脉冲 */
-        .calendar-day.all-fail-special {
-            background: rgba(239, 68, 68, 0.05) !important;
-            border: 1.5px solid rgba(239, 68, 68, 0.2) !important;
-            position: relative;
+        #conflict-banner {
+            height: 0;
             overflow: hidden;
+            background: #ffde5b;
+            color: orange;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 900;
+            border-radius: 1rem 1rem 0 0;
+            transition: height 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
-        /* 添加一个柔和的呼吸灯光圈 */
-        .calendar-day.all-fail-special::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
-            animation: fail-pulse 4s ease-in-out infinite;
-            pointer-events: none;
+        #conflict-banner.active {
+            height: 30px;
+            line-height: 30px;
         }
 
-        @keyframes fail-pulse {
-
-            0%,
-            100% {
-                opacity: 0.3;
-                transform: scale(0.9);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.1);
-            }
+        /* 评论区滚动条优化 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
         }
 
-        /* 深色模式适配 */
-        .dark-mode .calendar-day.all-fail-special {
-            background: rgba(239, 68, 68, 0.1) !important;
-            border-color: rgba(239, 68, 68, 0.3) !important;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
     </style>
 </head>
 
 <body class="antialiased">
     <div class="grid-bg"></div>
-
     <script src="../components/navbar.js"></script>
 
     <main class="max-w-4xl mx-auto px-8 pt-32 pb-20">
@@ -278,19 +258,13 @@
                     <span id="auth-status-text"
                         class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tighter">Identity: Not
                         Verified</span>
-
                     <div class="flex items-center gap-2">
                         <div id="g_id_onload"
                             data-client_id="609809453790-kdjpgmqh15b6bbom07tkhd4ih8lnug3b.apps.googleusercontent.com"
-                            data-callback="handleSignIn" data-auto_select="true">
-                        </div>
-
+                            data-callback="handleSignIn" data-auto_select="true"></div>
                         <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
-                            data-text="signin_with" data-size="small" data-logo_alignment="left">
-                        </div>
-
+                            data-text="signin_with" data-size="small" data-logo_alignment="left"></div>
                         <span class="text-gray-300 mx-1">|</span>
-
                         <input type="month" id="month-picker" onchange="changeMonth()"
                             class="bg-blue-600/5 text-blue-600 font-mono font-black px-4 py-1.5 rounded-xl border-none outline-none cursor-pointer text-sm">
                     </div>
@@ -311,12 +285,10 @@
                         class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-md font-mono font-bold tracking-tighter">TARGET:
                         ----</span>
                 </div>
-
                 <div id="task-preview-area" class="flex flex-wrap mb-6"></div>
                 <textarea id="task-input" rows="1"
                     class="w-full bg-transparent border-none p-0 text-xl font-medium focus:ring-0 placeholder-gray-300 dark:placeholder-gray-700 resize-none overflow-hidden"
                     placeholder="键入今日文稿条目, Enter 分离..."></textarea>
-
                 <div class="mt-10 flex justify-between items-center">
                     <div class="flex items-center gap-2 text-[10px] text-gray-400 font-mono"><span
                             class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> SYSTEM READY</div>
@@ -331,8 +303,22 @@
         <div id="modal-content" class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-date"
                 class="text-[10px] font-mono text-blue-600 tracking-widest uppercase mb-4 opacity-50 text-center"></div>
-            <div id="modal-text-content" class="space-y-3 mb-10"></div>
-            <div id="edit-zone" class="hidden mb-4">
+            <div id="modal-text-content" class="space-y-3 mb-6"></div>
+
+            <div class="mt-8 pt-6 border-t border-black/5 dark:border-white/5">
+                <h4 class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">实验室评论 / Comments</h4>
+                <div id="modal-comments-list" class="space-y-3 max-h-40 overflow-y-auto mb-6 pr-2 custom-scrollbar">
+                </div>
+                <div class="flex gap-2">
+                    <input id="comment-input" type="text"
+                        class="flex-1 bg-black/5 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="发表评论...">
+                    <button onclick="submitComment()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">发送</button>
+                </div>
+            </div>
+
+            <div id="edit-zone" class="hidden my-4">
                 <button id="edit-trigger-btn"
                     class="w-full py-4 bg-blue-600/10 text-blue-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition">进入编辑模式</button>
             </div>
@@ -343,7 +329,7 @@
 
     <div id="name-modal"
         class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-md">
-        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm">
+        <div class="bg-white dark:bg-zinc-900 p-12 rounded-[3.5rem] text-center max-w-sm shadow-2xl">
             <h2 class="text-2xl font-black mb-6">新身份识别</h2>
             <input id="nickname-input" type="text"
                 class="w-full bg-zinc-100 dark:bg-zinc-800 p-5 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500 text-center font-bold"
@@ -403,36 +389,33 @@
                 day.className = `calendar-day ${isToday ? 'today' : ''}`;
                 day.innerHTML = `<span class="font-mono text-xs font-black opacity-20 z-10">${i}</span>`;
 
-                // 在 renderCalendar 函数内循环生成 day 的位置：
                 if (rawData) {
-                    const items = JSON.parse(rawData);
+                    let dayObj = { tasks: [], comments: [] };
+                    try {
+                        const parsed = JSON.parse(rawData);
+                        dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
+                    } catch (e) { }
+
+                    const items = dayObj.tasks;
                     const allDone = items.length > 0 && items.every(it => it.status === 1);
                     const allFail = items.length > 0 && items.every(it => it.status === 2);
                     const anyDone = items.some(it => it.status === 1);
-                    const anyFail = items.some(it => it.status === 2);
                     const anyPending = items.some(it => it.status === 0);
+                    const anyFail = items.some(it => it.status === 2);
 
-                    // 1. 处理背景特效类名
                     if (allDone) {
                         day.classList.add('all-done-special');
                         day.innerHTML += `<div class="wreath-bg"></div>`;
                     } else if (allFail) {
-                        day.classList.add('all-fail-special'); // 应用你刚才要求的全未完成特效
+                        day.classList.add('all-fail-special');
                     }
 
-                    // 2. 修复点颜色逻辑
                     const dot = document.createElement('div');
                     dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
-
-                    let dotColor = '#d1d5db'; // 默认灰色 (只有待办时)
-                    if (allDone) {
-                        dotColor = '#10b981'; // 全对：绿色
-                    } else if (allFail) {
-                        dotColor = '#ef4444'; // 全叉：红色
-                    } else if (anyDone || (anyFail && anyPending)) {
-                        dotColor = '#f59e0b'; // 混合状态（有勾，或有叉有待办）：橙色
-                    }
-
+                    let dotColor = '#d1d5db';
+                    if (allDone) dotColor = '#10b981';
+                    else if (allFail) dotColor = '#ef4444';
+                    else if (anyDone || (anyFail && anyPending)) dotColor = '#f59e0b';
                     dot.style.background = dotColor;
                     day.appendChild(dot);
 
@@ -449,33 +432,22 @@
             }
         }
 
-        function changeMonth() {
-            const val = monthPicker.value.split('-');
-            currentYear = parseInt(val[0]);
-            currentMonth = parseInt(val[1]) - 1;
-            renderCalendar();
-        }
-
         function openHero(event, date, user, rawData) {
             editingDate = date;
             const modal = document.getElementById('hero-modal');
             const content = document.getElementById('modal-content');
-            const rect = event.currentTarget.getBoundingClientRect();
-
-            content.style.transition = 'none';
-            content.style.transform = `translate(${rect.left - window.innerWidth / 2 + rect.width / 2}px, ${rect.top - window.innerHeight / 2 + rect.height / 2}px) scale(0.1)`;
             modal.classList.add('active');
 
-            setTimeout(() => {
-                content.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                content.style.transform = `translate(0, 0) scale(1)`;
-            }, 10);
-
             document.getElementById('modal-date').innerText = `${date} // ${user}`;
-            const tasks = JSON.parse(rawData);
+
+            let dayObj = { tasks: [], comments: [] };
+            try {
+                const parsed = JSON.parse(rawData);
+                dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
+            } catch (e) { }
 
             const drawList = () => {
-                document.getElementById('modal-text-content').innerHTML = tasks.map((t, idx) => `
+                document.getElementById('modal-text-content').innerHTML = dayObj.tasks.map((t, idx) => `
                     <div class="flex items-center gap-4 p-3 bg-black/5 rounded-xl">
                         <div class="status-box ${t.status === 1 ? 'status-done' : (t.status === 2 ? 'status-fail' : '')}" 
                              onclick="cycleStatus(${idx})">
@@ -488,26 +460,71 @@
 
             window.cycleStatus = (idx) => {
                 if (user !== loginUser) return;
-                tasks[idx].status = (tasks[idx].status + 1) % 3;
+                dayObj.tasks[idx].status = (dayObj.tasks[idx].status + 1) % 3;
                 drawList();
                 fetch('/api/checkin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user: loginUser, date: date, text: JSON.stringify(tasks) })
+                    body: JSON.stringify({ user: loginUser, date: date, text: JSON.stringify(dayObj.tasks) })
                 }).then(() => loadCheckInData());
             };
 
             drawList();
+
+            // 渲染评论列表
+            const commentContainer = document.getElementById('modal-comments-list');
+            if (dayObj.comments && dayObj.comments.length > 0) {
+                commentContainer.innerHTML = dayObj.comments.map(c => `
+                    <div class="bg-black/5 dark:bg-white/5 p-3 rounded-2xl">
+                        <div class="flex justify-between mb-1"><span class="text-[9px] font-black text-blue-600 tracking-tighter uppercase">${c.user}</span><span class="text-[8px] opacity-40 font-mono">${c.time}</span></div>
+                        <p class="text-[11px] font-medium leading-relaxed">${c.content}</p>
+                    </div>
+                `).join('');
+            } else {
+                commentContainer.innerHTML = `<p class="text-[10px] text-gray-400 italic text-center py-4">暂无评论</p>`;
+            }
+
             const ez = document.getElementById('edit-zone');
-            ez.className = user === loginUser ? 'block mb-4' : 'hidden';
+            ez.className = user === loginUser ? 'block my-4' : 'hidden';
             document.getElementById('edit-trigger-btn').onclick = () => {
-                currentTasks = [...tasks];
+                currentTasks = [...dayObj.tasks];
                 document.getElementById('editing-date-display').innerText = `TARGET: ${date}`;
                 renderChips();
                 closeHero();
                 checkConflict();
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             };
+        }
+
+        async function submitComment() {
+            const input = document.getElementById('comment-input');
+            const content = input.value.trim();
+            if (!loginUser || !content) return;
+
+            const commentData = {
+                user: loginUser,
+                content: content,
+                time: new Date().toLocaleString('zh-CN', { hour12: false }).slice(5, -3)
+            };
+
+            const res = await fetch('/api/checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: userSelector.value || loginUser,
+                    date: editingDate,
+                    text: JSON.stringify(commentData),
+                    type: 'add_comment'
+                })
+            });
+
+            if (res.ok) {
+                input.value = '';
+                await loadCheckInData();
+                // 刷新弹窗
+                const freshData = cloudData[userSelector.value || loginUser][editingDate];
+                openHero(null, editingDate, userSelector.value || loginUser, freshData);
+            }
         }
 
         function handleSignIn(response) {
@@ -587,7 +604,15 @@
 
         function updateUserList() {
             const users = Object.keys(cloudData);
-            userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === loginUser ? 'selected' : ''}>👤 ${u}</option>`).join('');
+            const currentSelected = userSelector.value;
+            userSelector.innerHTML = users.map(u => `<option value="${u}" ${u === (currentSelected || loginUser) ? 'selected' : ''}>👤 ${u}</option>`).join('');
+        }
+
+        function changeMonth() {
+            const val = monthPicker.value.split('-');
+            currentYear = parseInt(val[0]);
+            currentMonth = parseInt(val[1]) - 1;
+            renderCalendar();
         }
 
         function closeHero() { document.getElementById('hero-modal').classList.remove('active'); }
