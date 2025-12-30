@@ -710,23 +710,26 @@
 
         window.toggleStatus = (i) => { currentTasks[i].status = (currentTasks[i].status + 1) % 3; renderChips(); };
 
+        // 修改后的 doCheckIn 函数
         async function doCheckIn() {
             if (!loginUser || currentTasks.length === 0) return;
-            const payload = { user: loginUser, date: editingDate, text: JSON.stringify(currentTasks) };
+
             const res = await fetch('/api/checkin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    user: loginUser,
+                    date: editingDate,
+                    text: JSON.stringify(currentTasks), // 传纯数组字符串
+                    type: 'update_tasks' // 明确告诉后端这是更新任务
+                })
             });
+
             if (res.ok) {
-                const st = document.getElementById('success-toast');
-                st.style.bottom = '40px';
+                showSuccessToast(); // 你的成功提示逻辑
                 currentTasks = [];
                 renderChips();
-                loadCheckInData().then(() => {
-                    renderCalendar();
-                    setTimeout(() => st.style.bottom = '-100px', 3000);
-                });
+                await loadCheckInData(); // 重新拉取干净的数据
             }
         }
 
