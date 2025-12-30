@@ -431,6 +431,8 @@
             calendarEl.innerHTML = '';
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const targetUser = userSelector.value || loginUser;
+
+            // 确保从最新的数据源获取
             const userData = cloudData[targetUser] || {};
 
             for (let i = 1; i <= daysInMonth; i++) {
@@ -445,46 +447,50 @@
                 if (rawData) {
                     let dayObj = { tasks: [], comments: [] };
                     try {
-                        const parsed = JSON.parse(rawData);
-                        dayObj = parsed.tasks ? parsed : { tasks: parsed, comments: [] };
-                    } catch (e) { }
+                        // 健壮性解析：处理 字符串、对象、数组 三种可能的历史遗留格式
+                        const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                        if (parsed && parsed.tasks) {
+                            dayObj = parsed;
+                        } else if (Array.isArray(parsed)) {
+                            dayObj.tasks = parsed;
+                        }
+                    } catch (e) { console.error("Parse Error at date:", dateKey, e); }
 
-                    // --- 新增逻辑：如果评论数大于 0，添加 has-comments 类 ---
+                    // --- 评论海浪逻辑 ---
                     if (dayObj.comments && dayObj.comments.length > 0) {
                         day.classList.add('has-comments');
-                        // 创建海浪容器并添加两个波浪层
-                        const waveContainer = document.createElement('div');
-                        waveContainer.className = 'wave-container';
-                        waveContainer.innerHTML = `
-            <div class="wave"></div>
-            <div class="wave wave-secondary"></div>
-        `;
-                        day.appendChild(waveContainer);
+                        if (!day.querySelector('.wave-container')) {
+                            const waveContainer = document.createElement('div');
+                            waveContainer.className = 'wave-container';
+                            waveContainer.innerHTML = `<div class="wave"></div><div class="wave wave-secondary"></div>`;
+                            day.appendChild(waveContainer);
+                        }
                     }
 
+                    const items = dayObj.tasks || [];
+                    if (items.length > 0) {
+                        const allDone = items.every(it => it.status === 1);
+                        const allFail = items.every(it => it.status === 2);
+                        const anyDone = items.some(it => it.status === 1);
+                        const anyPending = items.some(it => it.status === 0);
+                        const anyFail = items.some(it => it.status === 2);
 
-                    const items = dayObj.tasks;
-                    const allDone = items.length > 0 && items.every(it => it.status === 1);
-                    const allFail = items.length > 0 && items.every(it => it.status === 2);
-                    const anyDone = items.some(it => it.status === 1);
-                    const anyPending = items.some(it => it.status === 0);
-                    const anyFail = items.some(it => it.status === 2);
+                        if (allDone) {
+                            day.classList.add('all-done-special');
+                            day.innerHTML += `<div class="wreath-bg"></div>`;
+                        } else if (allFail) {
+                            day.classList.add('all-fail-special');
+                        }
 
-                    if (allDone) {
-                        day.classList.add('all-done-special');
-                        day.innerHTML += `<div class="wreath-bg"></div>`;
-                    } else if (allFail) {
-                        day.classList.add('all-fail-special');
+                        const dot = document.createElement('div');
+                        dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
+                        let dotColor = '#d1d5db';
+                        if (allDone) dotColor = '#10b981';
+                        else if (allFail) dotColor = '#ef4444';
+                        else if (anyDone || (anyFail && anyPending)) dotColor = '#f59e0b';
+                        dot.style.background = dotColor;
+                        day.appendChild(dot);
                     }
-
-                    const dot = document.createElement('div');
-                    dot.className = 'w-1.5 h-1.5 rounded-full mt-2';
-                    let dotColor = '#d1d5db';
-                    if (allDone) dotColor = '#10b981';
-                    else if (allFail) dotColor = '#ef4444';
-                    else if (anyDone || (anyFail && anyPending)) dotColor = '#f59e0b';
-                    dot.style.background = dotColor;
-                    day.appendChild(dot);
 
                     day.onclick = (e) => openHero(e, dateKey, targetUser, rawData);
                 } else {
@@ -654,18 +660,45 @@
 
         async function doCheckIn() {
             if (!loginUser || currentTasks.length === 0) return;
+
+            // 构造即将发送的数据
+            const payload = {
+                user: loginUser,
+                date: editingDate,
+                text: JSON.stringify(currentTasks)
+            };
+
             const res = await fetch('/api/checkin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user: loginUser, date: editingDate, text: JSON.stringify(currentTasks) })
+                body: JSON.stringify(payload)
             });
+
             if (res.ok) {
+                // 关键点：立即手动更新本地 cloudData，无需等待重新加载
+                if (!cloudData[loginUser]) cloudData[loginUser] = {};
+
+                // 模拟 API 存储格式，确保本地缓存与远程一致
+                const existingComments = [];
+                try {
+                    const old = JSON.parse(cloudData[loginUser][editingDate]);
+                    if (old.comments) existingComments = old.comments;
+                } catch (e) { }
+
+                cloudData[loginUser][editingDate] = JSON.stringify({
+                    tasks: currentTasks,
+                    comments: existingComments
+                });
+
                 const st = document.getElementById('success-toast');
                 st.style.bottom = '40px';
                 currentTasks = [];
                 renderChips();
-                await loadCheckInData();
+                renderCalendar(); // 立即重新渲染
                 setTimeout(() => st.style.bottom = '-100px', 3000);
+
+                // 后台静默同步最新全量数据
+                loadCheckInData();
             }
         }
 
