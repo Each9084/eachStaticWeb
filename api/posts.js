@@ -8,46 +8,57 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
-        // --- GET: 获取文章列表或单篇文章 ---
         if (req.method === 'GET') {
-            const { id, tag, search } = req.query;
+            const { search, tag } = req.query;
 
-            if (id) {
-                const { rows } = await sql`SELECT p.*, u.nickname FROM blog_posts p JOIN blog_users u ON p.author_sub = u.google_sub WHERE p.id = ${id}`;
-                return res.status(200).json(rows[0]);
-            }
-
-            let query;
+            // 注意：这里使用 blog_posts 和 blog_users，必须与你 SQL Editor 里创的一致
             if (search) {
-                query = await sql`SELECT p.*, u.nickname FROM blog_posts p JOIN blog_users u ON p.author_sub = u.google_sub WHERE p.title ILIKE ${'%' + search + '%'} ORDER BY p.created_at DESC`;
+                const { rows } = await sql`
+                    SELECT p.*, u.nickname 
+                    FROM blog_posts p 
+                    JOIN blog_users u ON p.author_sub = u.google_sub 
+                    WHERE p.title ILIKE ${'%' + search + '%'} 
+                    ORDER BY p.created_at DESC`;
+                return res.status(200).json(rows);
             } else if (tag) {
-                query = await sql`SELECT p.*, u.nickname FROM blog_posts p JOIN blog_users u ON p.author_sub = u.google_sub WHERE ${tag} = ANY(p.tags) ORDER BY p.created_at DESC`;
+                const { rows } = await sql`
+                    SELECT p.*, u.nickname 
+                    FROM blog_posts p 
+                    JOIN blog_users u ON p.author_sub = u.google_sub 
+                    WHERE ${tag} = ANY(p.tags) 
+                    ORDER BY p.created_at DESC`;
+                return res.status(200).json(rows);
             } else {
-                query = await sql`SELECT p.*, u.nickname FROM blog_posts p JOIN blog_users u ON p.author_sub = u.google_sub ORDER BY p.created_at DESC`;
+                const { rows } = await sql`
+                    SELECT p.*, u.nickname 
+                    FROM blog_posts p 
+                    LEFT JOIN blog_users u ON p.author_sub = u.google_sub 
+                    ORDER BY p.created_at DESC`;
+                return res.status(200).json(rows);
             }
-            return res.status(200).json(query.rows);
         }
 
-        // --- POST: 发表或更新文章 ---
         if (req.method === 'POST') {
-            const { sub, nickname, title, content, tags, cover_image, summary } = req.body;
+            const { sub, nickname, title, content, tags, summary } = req.body;
 
-            // 1. 自动注册/更新用户信息
+            // 1. 确保用户存在 (Upsert)
             await sql`
-                INSERT INTO blog_users (google_sub, nickname) 
-                VALUES (${sub}, ${nickname}) 
+                INSERT INTO blog_users (google_sub, nickname)
+                VALUES (${sub}, ${nickname})
                 ON CONFLICT (google_sub) DO UPDATE SET nickname = ${nickname}
             `;
 
             // 2. 插入文章
-            const result = await sql`
-                INSERT INTO blog_posts (author_sub, title, content, tags, cover_image, summary)
-                VALUES (${sub}, ${title}, ${content}, ${tags}, ${cover_image}, ${summary})
-                RETURNING id
+            await sql`
+                INSERT INTO blog_posts (author_sub, title, content, tags, summary)
+                VALUES (${sub}, ${title}, ${content}, ${tags}, ${summary})
             `;
-            return res.status(200).json({ success: true, id: result.rows[0].id });
+
+            return res.status(200).json({ success: true });
         }
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        // 关键：将错误详情返回给前端预览
+        console.error("Database Error:", error);
+        return res.status(500).json({ error: error.message, detail: error.stack });
     }
 }
